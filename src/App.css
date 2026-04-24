@@ -1,16 +1,17 @@
 .app-container {
   display: flex;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
   background-color: #f8fafc;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Important for flex children with overflow */
+  min-width: 0;
 }
 
 .page-content {

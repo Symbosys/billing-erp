@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Trash2,
   CalendarDays,
-  ArrowUpRight
+  ArrowUpRight,
+  X,
+  ShieldCheck
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
@@ -42,7 +44,8 @@ const Customers: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const itemsPerPage = 8;
 
   // Responsive Hooks
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -103,17 +106,19 @@ const Customers: React.FC = () => {
   };
 
   const colors = {
-    primary: "#4f46e5",
-    primaryLight: "#818cf8",
-    primaryGhost: "rgba(79, 70, 229, 0.05)",
-    textMain: "#0f172a",
+    primary: "#6366f1",
+    primaryDark: "#4f46e5",
+    primaryLight: "#e0e7ff",
+    secondary: "#64748b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    textMain: "#1e293b",
     textMuted: "#64748b",
-    border: "#f1f5f9",
     bg: "#f8fafc",
-    cardBg: "rgba(255, 255, 255, 0.8)",
-    emerald: "#10b981",
-    rose: "#f43f5e",
-    amber: "#f59e0b",
+    card: "#ffffff",
+    border: "#e2e8f0",
   };
 
   const shadows = {
@@ -123,9 +128,9 @@ const Customers: React.FC = () => {
 
   const stats = [
     { title: "Active Network", value: "1,284", icon: <Users size={24} />, color: colors.primary, change: "+12.5%" },
-    { title: "Net Growth", value: "$4.2M", icon: <TrendingUp size={24} />, color: colors.emerald, change: "+18.2%" },
-    { title: "Retention", value: "98.4%", icon: <ShieldCheck size={24} />, color: colors.amber, change: "+0.5%" },
-    { title: "Avg Session", value: "24m", icon: <Clock size={24} />, color: colors.rose, change: "-2.1%" },
+    { title: "Net Growth", value: "$4.2M", icon: <TrendingUp size={24} />, color: colors.success, change: "+18.2%" },
+    { title: "Retention", value: "98.4%", icon: <ShieldCheck size={24} />, color: colors.warning, change: "+0.5%" },
+    { title: "Avg Session", value: "24m", icon: <Clock size={24} />, color: colors.danger, change: "-2.1%" },
   ];
 
   // --- Inline Styles ---
@@ -133,140 +138,130 @@ const Customers: React.FC = () => {
     pageContainer: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: isMobile ? "32px" : "48px",
+      gap: isMobile ? "24px" : "32px",
       paddingBottom: "60px",
-      animation: "fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+      animation: "fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
     },
     header: {
       display: "flex",
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
-      alignItems: isMobile ? ("flex-start" as const) : ("center" as const),
       justifyContent: "space-between",
-      gap: "32px",
-      position: "relative" as const,
+      alignItems: isMobile ? "flex-start" : "center",
+      gap: "24px",
     },
     titleSection: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: "12px",
+      gap: "4px"
     },
     title: {
-      fontSize: isMobile ? "36px" : "56px",
-      fontWeight: 900,
+      fontSize: isMobile ? "28px" : "36px",
+      fontWeight: 800,
       color: colors.textMain,
-      letterSpacing: "-0.05em",
-      lineHeight: 0.95,
+      letterSpacing: "-0.02em",
       margin: 0,
     },
     subtitle: {
-      fontSize: isMobile ? "16px" : "20px",
-      fontWeight: 500,
       color: colors.textMuted,
-      maxWidth: "640px",
-      lineHeight: 1.5,
-    },
-    actionButtons: {
-      display: "flex",
-      gap: "16px",
-      width: isMobile ? "100%" : "auto",
+      margin: 0,
+      fontWeight: 500,
+      fontSize: isMobile ? "14px" : "16px"
     },
     statsGrid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
-      gap: "28px",
+      display: "flex",
+      overflowX: "auto" as const,
+      gap: isMobile ? "16px" : "24px",
+      padding: "4px 4px 16px 4px",
+      margin: "0 -4px",
+      scrollbarWidth: "none" as const,
+      msOverflowStyle: "none" as const,
+      scrollSnapType: "x mandatory" as const,
+      WebkitOverflowScrolling: "touch" as const,
+    },
+    statCardWrapper: {
+      flex: isMobile ? "0 0 280px" : isTablet ? "0 0 300px" : "1",
+      scrollSnapAlign: "start" as const,
+      minWidth: "260px"
     },
     statCard: (color: string) => ({
-      padding: "32px",
-      borderRadius: "36px",
+      padding: isMobile ? "20px" : "24px",
+      borderRadius: "24px",
       backgroundColor: "white",
-      backgroundImage: `linear-gradient(135deg, #ffffff 0%, ${color}08 100%)`,
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
       display: "flex",
       flexDirection: "column" as const,
-      gap: "24px",
+      gap: "16px",
+      transition: "all 0.3s ease",
       position: "relative" as const,
       overflow: "hidden",
-      transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-      cursor: "pointer",
     }),
     statIconBox: (color: string) => ({
-      width: "56px",
-      height: "56px",
-      borderRadius: "20px",
-      backgroundColor: "white",
+      width: "48px",
+      height: "48px",
+      borderRadius: "14px",
+      backgroundColor: `${color}10`,
+      color: color,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      color: color,
-      boxShadow: `0 8px 20px -6px ${color}30, inset 0 0 0 1px ${color}10`,
     }),
     filterBar: {
-      padding: isMobile ? "20px" : "28px",
-      borderRadius: "32px",
-      backgroundColor: "rgba(255, 255, 255, 0.7)",
-      backdropFilter: "blur(24px) saturate(180%)",
-      border: "1px solid rgba(255, 255, 255, 0.8)",
-      boxShadow: "0 20px 40px -20px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
       display: "flex",
-      flexDirection: isTablet ? ("column" as const) : ("row" as const),
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: "24px",
+      flexDirection: isMobile ? ("column" as const) : ("row" as const),
+      gap: "16px",
+      padding: isMobile ? "16px" : "20px",
+      backgroundColor: "white",
+      borderRadius: "24px",
+      border: `1px solid ${colors.border}`,
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
       position: "sticky" as const,
       top: "80px",
       zIndex: 10,
     },
     searchContainer: {
       position: "relative" as const,
-      flex: 1,
-      width: "100%",
-      maxWidth: isTablet ? "none" : "640px",
+      flex: 3,
     },
     searchInput: {
       width: "100%",
-      backgroundColor: "rgba(248, 250, 252, 0.8)",
-      border: "1px solid rgba(226, 232, 240, 0.8)",
-      borderRadius: "22px",
-      padding: "18px 24px 18px 60px",
-      fontSize: "16px",
-      fontWeight: 600,
-      color: colors.textMain,
+      padding: "12px 16px 12px 48px",
+      borderRadius: "14px",
+      border: `1px solid ${colors.border}`,
+      backgroundColor: colors.bg,
       outline: "none",
-      transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-      boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+      fontSize: "14px",
+      fontWeight: 500,
+      transition: "border-color 0.2s",
     },
     customerGrid: {
       display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1fr 1fr 1fr",
-      gap: isMobile ? "28px" : "40px",
+      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(auto-fill, minmax(280px, 1fr))",
+      gap: isMobile ? "20px" : "24px",
     },
     customerCard: {
       backgroundColor: "white",
-      borderRadius: "40px",
+      borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 15px 35px -12px rgba(0, 0, 0, 0.05)",
-      transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      transition: "all 0.3s ease",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column" as const,
       position: "relative" as const,
+      cursor: "pointer",
     },
     avatar: {
-      width: "72px",
-      height: "72px",
-      borderRadius: "28px",
-      backgroundColor: "white",
-      color: colors.primary,
+      width: "56px",
+      height: "56px",
+      borderRadius: "16px",
+      backgroundColor: colors.primaryLight,
+      color: colors.primaryDark,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "24px",
-      fontWeight: 900,
-      boxShadow: shadows.soft,
-      border: `1px solid ${colors.primary}10`,
-      position: "relative" as const,
-      zIndex: 2,
+      fontSize: "18px",
+      fontWeight: 800,
     },
     pagination: {
       display: "flex",
@@ -291,6 +286,30 @@ const Customers: React.FC = () => {
       alignItems: "center",
       justifyContent: "center",
     }),
+    modalOverlay: {
+      position: "fixed" as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(15, 23, 42, 0.6)",
+      backdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2000,
+      animation: "fadeIn 0.3s ease-out",
+      padding: "20px",
+    },
+    modalContent: {
+      backgroundColor: "white",
+      borderRadius: "32px",
+      width: "100%",
+      maxWidth: "600px",
+      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+      overflow: "hidden",
+      animation: "modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+    }
   };
 
   return (
@@ -298,32 +317,22 @@ const Customers: React.FC = () => {
       {/* Header Section */}
       <div style={styles.header}>
         <div style={styles.titleSection}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", color: colors.primary, fontWeight: 900, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.2em" }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: colors.primary, boxShadow: `0 0 12px ${colors.primary}` }} />
-            Intelligence Hub
-          </div>
-          <h1 style={styles.title}>
-            Client <span style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.primaryLight})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Network</span>
-          </h1>
-          <p style={styles.subtitle}>
-            Architecting global relationships through advanced data visualization and predictive behavioral analytics.
-          </p>
+          <h1 style={styles.title}>Client Network</h1>
+          <p style={styles.subtitle}>Architecting global relationships through advanced data visualization.</p>
         </div>
-        <div style={styles.actionButtons}>
+        <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
           <Button 
             variant="secondary" 
-            style={{ borderRadius: "20px", padding: "16px 32px", backgroundColor: "white", border: `1px solid ${colors.border}`, fontWeight: 800, fontSize: "15px", color: colors.textMain }}
-            leftIcon={<Download size={20} />}
-          >
-            Export
-          </Button>
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }}
+            leftIcon={<Download size={18} />}
+          />
           <Button 
             variant="primary" 
-            style={{ borderRadius: "20px", padding: "16px 32px", backgroundColor: colors.primary, boxShadow: shadows.premium, fontWeight: 800, fontSize: "15px" }} 
-            leftIcon={<Plus size={22} />}
+            style={{ borderRadius: "14px", padding: "12px 24px", backgroundColor: colors.primaryDark, boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", fontWeight: 600 }} 
+            leftIcon={<Plus size={20} />}
             onClick={() => setIsAddModalOpen(true)}
           >
-            New Enterprise
+            New Client
           </Button>
         </div>
       </div>
@@ -331,24 +340,27 @@ const Customers: React.FC = () => {
       {/* Stats Cards */}
       <div style={styles.statsGrid}>
         {stats.map((stat, idx) => (
-          <div 
-            key={idx} 
-            style={styles.statCard(stat.color)} 
-            className="group"
-            onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-10px)"}
-            onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-          >
-            <div style={{ position: "absolute", top: "-10%", right: "-10%", width: "120px", height: "120px", borderRadius: "50%", background: `radial-gradient(circle, ${stat.color}15 0%, transparent 70%)`, pointerEvents: "none" }} />
-            <div style={styles.statIconBox(stat.color)}>
-              {stat.icon}
-            </div>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <p style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>{stat.title}</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginTop: "6px" }}>
-                <h3 style={{ fontSize: "32px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.03em" }}>{stat.value}</h3>
-                <span style={{ fontSize: "12px", fontWeight: 900, color: colors.emerald, backgroundColor: `${colors.emerald}10`, padding: "4px 10px", borderRadius: "10px", border: `1px solid ${colors.emerald}20` }}>
+          <div key={idx} style={styles.statCardWrapper}>
+            <div 
+              style={styles.statCard(stat.color)} 
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.05)";
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={styles.statIconBox(stat.color)}>{stat.icon}</div>
+                <Badge variant={stat.change.startsWith('+') ? "success" : "danger"} style={{ fontWeight: 700, fontSize: "10px" }}>
                   {stat.change}
-                </span>
+                </Badge>
+              </div>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: colors.textMuted, margin: "0 0 4px 0" }}>{stat.title}</p>
+                <h3 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{stat.value}</h3>
               </div>
             </div>
           </div>
@@ -358,7 +370,7 @@ const Customers: React.FC = () => {
       {/* Filter & View Controls */}
       <div style={styles.filterBar}>
         <div style={styles.searchContainer}>
-          <Search style={{ position: "absolute", left: "24px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={22} />
+          <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={18} />
           <input 
             style={styles.searchInput}
             value={searchQuery}
@@ -366,38 +378,36 @@ const Customers: React.FC = () => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Query node by name, encrypted ID, or territory..." 
+            onFocus={(e) => e.target.style.borderColor = colors.primaryDark}
+            onBlur={(e) => e.target.style.borderColor = colors.border}
+            placeholder="Search by name, email, or location..." 
           />
         </div>
         
-        <div style={{ display: "flex", alignItems: "center", gap: "20px", width: isTablet ? "100%" : "auto", justifyContent: "space-between" }}>
-          <div style={{ width: isMobile ? "100%" : "220px" }}>
-            <Select 
-              value={sortBy}
-              onChange={(val) => setSortBy(val as string)}
-              options={[
-                { label: "Sort: Chronological", value: "latest" },
-                { label: "Sort: Lexicographical", value: "name" },
-                { label: "Sort: Capitalization", value: "revenue" },
-              ]}
-              style={{ borderRadius: "18px" }}
-            />
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", width: isMobile ? "100%" : "auto", justifyContent: "space-between" }}>
+          <Select 
+            value={sortBy}
+            onChange={(val) => setSortBy(val as string)}
+            options={[
+              { label: "Newest First", value: "latest" },
+              { label: "Alphabetical", value: "name" },
+              { label: "High Revenue", value: "revenue" },
+            ]}
+            style={{ borderRadius: "12px", width: isMobile ? "100%" : "180px" }}
+          />
 
-          {!isMobile && <div style={{ width: "2px", height: "40px", backgroundColor: colors.border, opacity: 0.5 }} />}
-
-          <div style={{ display: "flex", gap: "10px", padding: "8px", backgroundColor: "white", borderRadius: "20px", border: `1px solid ${colors.border}`, boxShadow: "inset 0 2px 4px 0 rgba(0,0,0,0.03)" }}>
+          <div style={{ display: "flex", gap: "4px", padding: "4px", backgroundColor: colors.bg, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
             <button 
               onClick={() => setView("grid")}
-              style={{ padding: "12px", borderRadius: "14px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "grid" ? colors.primary : "transparent", color: view === "grid" ? "white" : colors.textMuted, boxShadow: view === "grid" ? shadows.premium : "none", transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "grid" ? "white" : "transparent", color: view === "grid" ? colors.primaryDark : colors.textMuted, boxShadow: view === "grid" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
-              <LayoutGrid size={22} />
+              <LayoutGrid size={18} />
             </button>
             <button 
               onClick={() => setView("list")}
-              style={{ padding: "12px", borderRadius: "14px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "list" ? colors.primary : "transparent", color: view === "list" ? "white" : colors.textMuted, boxShadow: view === "list" ? shadows.premium : "none", transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "list" ? "white" : "transparent", color: view === "list" ? colors.primaryDark : colors.textMuted, boxShadow: view === "list" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
-              <ListIcon size={22} />
+              <ListIcon size={18} />
             </button>
           </div>
         </div>
@@ -411,82 +421,63 @@ const Customers: React.FC = () => {
               <div 
                 key={customer.id} 
                 style={styles.customerCard} 
-                className="group"
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-12px)";
-                  e.currentTarget.style.boxShadow = "0 30px 60px -15px rgba(79, 70, 229, 0.15)";
-                  e.currentTarget.style.borderColor = `${colors.primary}30`;
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+                  e.currentTarget.style.borderColor = colors.primaryDark;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 15px 35px -12px rgba(0, 0, 0, 0.05)";
+                  e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.05)";
                   e.currentTarget.style.borderColor = colors.border;
                 }}
               >
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", background: `linear-gradient(to right, ${colors.primary}, ${colors.primaryLight})`, opacity: 0, transition: "opacity 0.4s ease" }} className="group-hover:opacity-100" />
-                
-                <div style={{ padding: "40px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }}>
-                    <div style={styles.avatar}>
-                      <div style={{ position: "absolute", inset: "-4px", borderRadius: "32px", border: `2px solid ${colors.primary}15`, zIndex: 1 }} />
-                      {customer.avatar}
-                    </div>
+                <div style={{ padding: "24px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+                    <div style={styles.avatar}>{customer.avatar}</div>
                     <Badge 
                       variant={customer.status === 'Active' ? 'success' : customer.status === 'Pending' ? 'warning' : 'neutral'}
                       dot
-                      style={{ padding: "10px 20px", fontSize: "12px", fontWeight: 900, borderRadius: "16px", letterSpacing: "0.05em" }}
+                      style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}
                     >
                       {customer.status}
                     </Badge>
                   </div>
 
-                  <div style={{ marginBottom: "32px" }}>
-                    <h3 style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, display: "flex", alignItems: "center", gap: "10px", letterSpacing: "-0.02em" }}>
-                      {customer.name}
-                      <ArrowUpRight size={20} style={{ color: colors.primary, opacity: 0.3 }} />
-                    </h3>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.textMuted, fontSize: "14px", marginTop: "8px", fontWeight: 700 }}>
-                      <MapPin size={16} style={{ color: colors.primaryLight }} />
+                  <div style={{ marginBottom: "20px" }}>
+                    <h3 style={{ fontSize: "18px", fontWeight: 700, color: colors.textMain, margin: 0 }}>{customer.name}</h3>
+                    <p style={{ fontSize: "13px", color: colors.textMuted, fontWeight: 500, marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <MapPin size={14} style={{ color: colors.primaryDark }} />
                       {customer.location}
-                    </div>
+                    </p>
                   </div>
 
-                  <div style={{ padding: "24px 0", borderTop: `1px solid ${colors.border}`, borderBottom: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", gap: "16px", marginBottom: "32px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", color: colors.textMain, fontSize: "14px", fontWeight: 700 }}>
-                      <div style={{ width: "36px", height: "36px", backgroundColor: colors.bg, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: colors.primary }}><Mail size={16} /></div>
-                      {customer.email}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px", padding: "16px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.textMain, fontSize: "13px", fontWeight: 600 }}>
+                      <Mail size={14} style={{ color: colors.secondary }} />
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{customer.email}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", color: colors.textMain, fontSize: "14px", fontWeight: 700 }}>
-                      <div style={{ width: "36px", height: "36px", backgroundColor: colors.bg, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: colors.primary }}><Phone size={16} /></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.textMain, fontSize: "13px", fontWeight: 600 }}>
+                      <Phone size={14} style={{ color: colors.secondary }} />
                       {customer.phone}
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                     <div>
-                      <p style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.12em" }}>Net Capital</p>
-                      <p style={{ fontSize: "22px", fontWeight: 900, color: colors.textMain }}>${customer.revenue.toLocaleString()}</p>
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>Revenue</p>
+                      <p style={{ fontSize: "18px", fontWeight: 800, color: colors.textMain, margin: "2px 0 0 0" }}>${customer.revenue.toLocaleString()}</p>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <p style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.12em" }}>Onboard Date</p>
-                      <p style={{ fontSize: "16px", fontWeight: 800, color: colors.textMain }}>{customer.joined}</p>
-                    </div>
+                    <button 
+                      onClick={() => setSelectedCustomer(customer)}
+                      style={{ padding: "8px", borderRadius: "10px", border: "none", backgroundColor: colors.primaryLight, color: colors.primaryDark, cursor: "pointer", display: "flex", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.primaryDark + '20'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.primaryLight}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
                   </div>
                 </div>
-                
-                <button 
-                  style={{ width: "100%", padding: "24px", border: "none", borderTop: `1px solid ${colors.border}`, backgroundColor: "rgba(248, 250, 252, 0.5)", color: colors.primary, fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.25em", cursor: "pointer", transition: "all 0.4s ease" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors.primary;
-                    e.currentTarget.style.color = "white";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(248, 250, 252, 0.5)";
-                    e.currentTarget.style.color = colors.primary;
-                  }}
-                >
-                  Access Deep Analytics
-                </button>
               </div>
             ))}
           </div>
@@ -544,9 +535,15 @@ const Customers: React.FC = () => {
                       <td style={{ padding: "24px 40px", textAlign: "right" }}>
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                           <button 
+                            onClick={() => setSelectedCustomer(customer)}
+                            style={{ padding: "10px", borderRadius: "14px", border: "none", backgroundColor: colors.primaryLight, color: colors.primaryDark, cursor: "pointer" }}
+                          >
+                            <Search size={18} />
+                          </button>
+                          <button 
                             onClick={() => handleDelete(customer.id)}
                             style={{ padding: "10px", borderRadius: "14px", border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fff1f2"; e.currentTarget.style.color = colors.rose; e.currentTarget.style.transform = "scale(1.1)"; }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fff1f2"; e.currentTarget.style.color = colors.danger; e.currentTarget.style.transform = "scale(1.1)"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = colors.textMuted; e.currentTarget.style.transform = "scale(1)"; }}
                           >
                             <Trash2 size={20} />
@@ -615,71 +612,189 @@ const Customers: React.FC = () => {
       )}
 
       {/* Add Customer Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Initialize Global Account"
-        size="lg"
-        footer={
-          <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end", width: "100%", padding: "24px" }}>
-            <Button variant="ghost" style={{ borderRadius: "18px", fontWeight: 800, padding: "14px 28px" }} onClick={() => setIsAddModalOpen(false)}>Discard</Button>
-            <Button variant="primary" style={{ borderRadius: "18px", fontWeight: 800, backgroundColor: colors.primary, boxShadow: shadows.premium, padding: "14px 32px" }} onClick={handleAddCustomer}>Confirm Deployment</Button>
-          </div>
-        }
-      >
-        <div style={{ padding: "8px" }}>
-          <form style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "32px" }} onSubmit={handleAddCustomer}>
-            <Input 
-              label="Enterprise Entity Name" 
-              placeholder="e.g. Global Tech Solutions" 
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              leftIcon={<Users size={20} />}
-              required
-            />
-            <Input 
-              label="Primary Access Node (Email)" 
-              type="email" 
-              placeholder="node@enterprise.io" 
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              leftIcon={<Mail size={20} />}
-              required
-            />
-            <Input 
-              label="Secure Communication Port" 
-              placeholder="+1 000 000 0000" 
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              leftIcon={<Phone size={20} />}
-            />
-            <Input 
-              label="Geographic Territory" 
-              placeholder="City, National Region" 
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              leftIcon={<MapPin size={20} />}
-            />
-            <div style={{ gridColumn: isMobile ? "span 1" : "span 2" }}>
-              <Select 
-                label="Current Operational Protocol"
-                value={formData.status}
-                onChange={(val) => setFormData({...formData, status: val as string})}
-                options={[
-                  { label: "Active Operational Mode", value: "Active" },
-                  { label: "Deployment In Progress", value: "Pending" },
-                  { label: "Protocol Hibernation", value: "Inactive" },
-                ]}
-              />
+      {isAddModalOpen && (
+        <div style={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h2 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>Register Client</h2>
+                <p style={{ fontSize: "14px", color: colors.textMuted, margin: "4px 0 0 0", fontWeight: 500 }}>Enter the new entity details below.</p>
+              </div>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                style={{ padding: "8px", borderRadius: "12px", border: "none", backgroundColor: colors.bg, color: colors.textMuted, cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
             </div>
-          </form>
+
+            <div style={{ padding: "32px" }}>
+              <form style={{ display: "flex", flexDirection: "column", gap: "24px" }} onSubmit={handleAddCustomer}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Client Name</label>
+                    <div style={{ position: "relative" }}>
+                      <Users size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
+                      <input 
+                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
+                        placeholder="John Doe / Acme Corp"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Email Address</label>
+                    <div style={{ position: "relative" }}>
+                      <Mail size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
+                      <input 
+                        type="email"
+                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
+                        placeholder="john@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Phone Number</label>
+                    <div style={{ position: "relative" }}>
+                      <Phone size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
+                      <input 
+                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
+                        placeholder="+1 234 567 890"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Location</label>
+                    <div style={{ position: "relative" }}>
+                      <MapPin size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
+                      <input 
+                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
+                        placeholder="New York, USA"
+                        value={formData.location}
+                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Client Status</label>
+                  <Select 
+                    value={formData.status}
+                    onChange={(val) => setFormData({...formData, status: val as string})}
+                    options={[
+                      { label: "Active", value: "Active" },
+                      { label: "Pending", value: "Pending" },
+                      { label: "Inactive", value: "Inactive" },
+                    ]}
+                    style={{ borderRadius: "12px" }}
+                  />
+                </div>
+              </form>
+            </div>
+
+            <div style={{ padding: "24px 32px", backgroundColor: colors.bg, borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                style={{ padding: "10px 20px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: "white", color: colors.textMuted, fontWeight: 700, cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddCustomer}
+                style={{ padding: "10px 24px", borderRadius: "12px", border: "none", backgroundColor: colors.primaryDark, color: "white", fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)" }}
+              >
+                Save Client
+              </button>
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
+
+      {/* Customer Detail Modal */}
+      {selectedCustomer && (
+        <div style={styles.modalOverlay} onClick={() => setSelectedCustomer(null)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{ ...styles.avatar, width: "48px", height: "48px", fontSize: "16px" }}>{selectedCustomer.avatar}</div>
+                <div>
+                  <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{selectedCustomer.name}</h2>
+                  <p style={{ fontSize: "12px", color: colors.textMuted, margin: "2px 0 0 0", fontWeight: 600 }}>#CUST-ID-2024-0{selectedCustomer.id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedCustomer(null)}
+                style={{ padding: "8px", borderRadius: "12px", border: "none", backgroundColor: colors.bg, color: colors.textMuted, cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: "32px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", marginBottom: "32px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Revenue Generated</label>
+                  <p style={{ fontSize: "28px", fontWeight: 800, color: colors.textMain, margin: "8px 0 0 0" }}>${selectedCustomer.revenue.toLocaleString()}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Onboarding Date</label>
+                  <p style={{ fontSize: "18px", fontWeight: 700, color: colors.textMain, margin: "8px 0 0 0" }}>{selectedCustomer.joined}</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                  <Mail size={20} style={{ color: colors.primaryDark }} />
+                  <div>
+                    <p style={{ fontSize: "11px", fontWeight: 700, color: colors.textMuted, margin: 0 }}>Primary Email</p>
+                    <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMain, margin: 0 }}>{selectedCustomer.email}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                  <Phone size={20} style={{ color: colors.primaryDark }} />
+                  <div>
+                    <p style={{ fontSize: "11px", fontWeight: 700, color: colors.textMuted, margin: 0 }}>Phone Number</p>
+                    <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMain, margin: 0 }}>{selectedCustomer.phone}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
+                  <MapPin size={20} style={{ color: colors.primaryDark }} />
+                  <div>
+                    <p style={{ fontSize: "11px", fontWeight: 700, color: colors.textMuted, margin: 0 }}>Main Office</p>
+                    <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMain, margin: 0 }}>{selectedCustomer.location}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: "24px 32px", backgroundColor: colors.bg, borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button 
+                onClick={() => setSelectedCustomer(null)}
+                style={{ padding: "10px 24px", borderRadius: "12px", border: "none", backgroundColor: colors.primaryDark, color: "white", fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)" }}
+              >
+                Close View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(40px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -697,23 +812,5 @@ const Customers: React.FC = () => {
     </div>
   );
 };
-
-const ShieldCheck = ({ size, ...props }: any) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-    <path d="m9 12 2 2 4-4" />
-  </svg>
-);
 
 export default Customers;

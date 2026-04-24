@@ -12,7 +12,10 @@ import {
   Mail, 
   Trash2, 
   RefreshCw,
-  Zap
+  Zap,
+  X,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
@@ -34,6 +37,44 @@ const Billing: React.FC = () => {
     status: "Pending"
   });
 
+  const [invoiceList, setInvoiceList] = useState([
+    { id: "INV-2024-001", customer: "Alexander Wright", amount: "$1,200.00", date: "Oct 12, 2024", status: "Paid", method: "Credit Card" },
+    { id: "INV-2024-002", customer: "Sophia Chen", amount: "$3,450.50", date: "Oct 14, 2024", status: "Pending", method: "Bank Transfer" },
+    { id: "INV-2024-003", customer: "Marcus Miller", amount: "$890.00", date: "Oct 15, 2024", status: "Overdue", method: "PayPal" },
+    { id: "INV-2024-004", customer: "Elena Rodriguez", amount: "$2,100.00", date: "Oct 16, 2024", status: "Paid", method: "Credit Card" },
+    { id: "INV-2024-005", customer: "David Kim", amount: "$560.25", date: "Oct 18, 2024", status: "Pending", method: "Apple Pay" },
+  ]);
+
+  const handleCreateInvoice = () => {
+    if (!newInvoice.customer || !newInvoice.amount) return;
+    
+    const nextId = `INV-2024-${String(invoiceList.length + 1).padStart(3, '0')}`;
+    const newEntry = {
+      id: nextId,
+      customer: newInvoice.customer,
+      amount: `$${parseFloat(newInvoice.amount).toLocaleString()}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: newInvoice.status,
+      method: newInvoice.method
+    };
+
+    setInvoiceList([newEntry, ...invoiceList]);
+    setIsModalOpen(false);
+    setNewInvoice({ customer: "", amount: "", method: "Credit Card", status: "Pending" });
+  };
+
+  const handleDeleteInvoice = (id: string) => {
+    setInvoiceList(invoiceList.filter(inv => inv.id !== id));
+  };
+
+  const handlePrintInvoice = (id: string) => {
+    alert(`Initializing print protocol for ${id}...`);
+  };
+
+  const handleEmailInvoice = (id: string) => {
+    alert(`Despatching digital invoice ${id} to customer email...`);
+  };
+
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -44,116 +85,152 @@ const Billing: React.FC = () => {
   const isTablet = windowWidth < 1024;
 
   const colors = {
-    primary: "#4f46e5",
-    primaryLight: "#818cf8",
-    textMain: "#0f172a",
+    primary: "#6366f1",
+    primaryDark: "#4f46e5",
+    primaryLight: "#e0e7ff",
+    secondary: "#64748b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    textMain: "#1e293b",
     textMuted: "#64748b",
-    border: "rgba(226, 232, 240, 0.7)",
-    emerald: "#10b981",
-    rose: "#f43f5e",
-    amber: "#f59e0b",
     bg: "#f8fafc",
+    card: "#ffffff",
+    border: "#e2e8f0",
   };
 
-  const invoices = [
-    { id: "INV-2024-001", customer: "Alexander Wright", amount: "$1,200.00", date: "Oct 12, 2024", status: "Paid", method: "Credit Card" },
-    { id: "INV-2024-002", customer: "Sophia Chen", amount: "$3,450.50", date: "Oct 14, 2024", status: "Pending", method: "Bank Transfer" },
-    { id: "INV-2024-003", customer: "Marcus Miller", amount: "$890.00", date: "Oct 15, 2024", status: "Overdue", method: "PayPal" },
-    { id: "INV-2024-004", customer: "Elena Rodriguez", amount: "$2,100.00", date: "Oct 16, 2024", status: "Paid", method: "Credit Card" },
-    { id: "INV-2024-005", customer: "David Kim", amount: "$560.25", date: "Oct 18, 2024", status: "Pending", method: "Apple Pay" },
-  ];
 
   const styles = {
     container: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: isMobile ? "32px" : "48px",
+      gap: isMobile ? "24px" : "32px",
       paddingBottom: "60px",
-      animation: "fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+      animation: "fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
     },
     header: {
       display: "flex",
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
       justifyContent: "space-between",
       alignItems: isMobile ? "flex-start" : "center",
-      gap: "32px",
+      gap: "24px",
+      marginBottom: "8px"
+    },
+    titleSection: {
+      display: "flex",
+      flexDirection: "column" as const,
+      gap: "4px"
+    },
+    title: {
+      fontSize: isMobile ? "28px" : "36px",
+      fontWeight: 800,
+      color: colors.textMain,
+      letterSpacing: "-0.02em",
+      margin: 0,
+    },
+    subtitle: {
+      color: colors.textMuted,
+      margin: 0,
+      fontWeight: 500,
+      fontSize: isMobile ? "14px" : "16px"
     },
     statsRow: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
-      gap: "24px",
+      display: "flex",
+      overflowX: "auto" as const,
+      gap: isMobile ? "16px" : "24px",
+      padding: "4px 4px 16px 4px",
+      margin: "0 -4px",
+      scrollbarWidth: "none" as const,
+      msOverflowStyle: "none" as const,
+      scrollSnapType: "x mandatory" as const,
+      WebkitOverflowScrolling: "touch" as const,
     },
-    statCard: {
-      padding: "28px",
-      borderRadius: "28px",
+    statCardWrapper: {
+      flex: isMobile ? "0 0 280px" : isTablet ? "0 0 300px" : "1",
+      scrollSnapAlign: "start" as const,
+      minWidth: "260px"
+    },
+    statCard: (color: string) => ({
+      padding: isMobile ? "20px" : "24px",
+      borderRadius: "24px",
       backgroundColor: "white",
       border: `1px solid ${colors.border}`,
       display: "flex",
       flexDirection: "column" as const,
       gap: "16px",
-      position: "relative" as const,
-      overflow: "hidden",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.02)",
-    },
-    iconBox: (color: string) => ({
-      width: "52px",
-      height: "52px",
-      borderRadius: "16px",
+      transition: "all 0.3s ease",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+    }),
+    iconWrapper: (color: string) => ({
+      width: "48px",
+      height: "48px",
+      borderRadius: "14px",
       backgroundColor: `${color}10`,
       color: color,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      boxShadow: `inset 0 0 0 1px ${color}15`,
     }),
     filterBar: {
       display: "flex",
-      flexDirection: isTablet ? ("column" as const) : ("row" as const),
-      gap: "20px",
-      padding: "24px",
+      flexDirection: isMobile ? ("column" as const) : ("row" as const),
+      gap: "16px",
+      padding: isMobile ? "16px" : "20px",
       backgroundColor: "white",
-      borderRadius: "28px",
+      borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
       position: "sticky" as const,
       top: "80px",
       zIndex: 10,
     },
     searchInputWrapper: {
       position: "relative" as const,
-      flex: 2,
+      flex: 3,
     },
     searchInput: {
       width: "100%",
-      padding: "16px 20px 16px 56px",
-      borderRadius: "18px",
+      padding: "12px 16px 12px 48px",
+      borderRadius: "14px",
       border: `1px solid ${colors.border}`,
       backgroundColor: colors.bg,
       outline: "none",
-      fontSize: "15px",
-      fontWeight: 600,
-      transition: "all 0.3s ease",
+      fontSize: "14px",
+      fontWeight: 500,
+      transition: "border-color 0.2s",
     },
-    tableHeader: {
-      backgroundColor: "#fafafa",
-      borderBottom: `1px solid ${colors.border}`,
+    tableContainer: {
+      overflowX: "auto" as const,
+      borderRadius: "24px",
+      border: `1px solid ${colors.border}`,
+      backgroundColor: "white",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "separate" as const,
+      borderSpacing: 0,
+      minWidth: "1000px",
     },
     th: {
-      padding: "28px 32px",
+      padding: "16px 24px",
       textAlign: "left" as const,
       fontSize: "12px",
-      fontWeight: 900,
+      fontWeight: 700,
       color: colors.textMuted,
       textTransform: "uppercase" as const,
-      letterSpacing: "0.15em",
+      letterSpacing: "0.05em",
+      borderBottom: `1px solid ${colors.border}`,
+      backgroundColor: "#f8fafc",
     },
     tr: (isHovered: boolean) => ({
-      borderBottom: `1px solid ${colors.border}`,
       backgroundColor: isHovered ? "rgba(79, 70, 229, 0.02)" : "transparent",
-      transition: "all 0.3s ease",
+      transition: "all 0.2s ease",
     }),
     td: {
-      padding: "24px 32px",
+      padding: "16px 24px",
+      borderBottom: `1px solid ${colors.border}`,
     }
   };
 
@@ -161,61 +238,74 @@ const Billing: React.FC = () => {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: colors.primary, fontWeight: 900, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "8px" }}>
-            <FileText size={16} />
-            Financial Ledger
-          </div>
-          <h1 style={{ fontSize: isMobile ? "36px" : "48px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.04em", margin: 0 }}>Billing & <span style={{ color: colors.primary }}>Invoices</span></h1>
-          <p style={{ color: colors.textMuted, marginTop: "8px", fontWeight: 500, fontSize: "16px" }}>Manage enterprise transactions, generate smart invoices, and track global revenue.</p>
+        <div style={styles.titleSection}>
+          <h1 style={styles.title}>
+            Billing & Invoices
+          </h1>
+          <p style={styles.subtitle}>Manage enterprise transactions, generate smart invoices, and track revenue.</p>
         </div>
-        <div style={{ display: "flex", gap: "16px", width: isMobile ? "100%" : "auto" }}>
-          <Button variant="secondary" leftIcon={<RefreshCw size={20} />} style={{ borderRadius: "18px", padding: "16px", backgroundColor: "white", border: `1px solid ${colors.border}` }} />
+        <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
+          <Button 
+            variant="secondary" 
+            leftIcon={<RefreshCw size={18} />} 
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} 
+          />
           <Button 
             variant="primary" 
-            leftIcon={<Plus size={22} />} 
+            leftIcon={<Plus size={20} />} 
             onClick={() => setIsModalOpen(true)}
-            style={{ borderRadius: "18px", padding: "16px 32px", backgroundColor: colors.primary, boxShadow: "0 10px 25px rgba(79, 70, 229, 0.25)", fontWeight: 800 }}
+            style={{ 
+              borderRadius: "14px", 
+              padding: "12px 24px", 
+              backgroundColor: colors.primaryDark, 
+              boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", 
+              fontWeight: 600 
+            }}
           >
-            Create Invoice
+            New Invoice
           </Button>
         </div>
       </div>
 
-      {/* Analytics Snapshot */}
       <div style={styles.statsRow}>
         {[
-          { label: "Gross Revenue", value: "$124,500", icon: <DollarSign size={24} />, color: colors.primary, change: "+12.5%" },
-          { label: "Active Invoices", value: "48", icon: <FileText size={24} />, color: colors.emerald, change: "+4" },
-          { label: "Outstanding", value: "$8,240", icon: <Clock size={24} />, color: colors.amber, change: "-2.1%" },
-          { label: "Overdue Claims", value: "$1,120", icon: <AlertCircle size={24} />, color: colors.rose, change: "+0.5%" },
+          { label: "Gross Revenue", value: "$124,500", icon: <DollarSign size={22} />, color: colors.primaryDark, change: "+12.5%" },
+          { label: "Active Invoices", value: "48", icon: <FileText size={22} />, color: colors.success, change: "+4" },
+          { label: "Outstanding", value: "$8,240", icon: <Clock size={22} />, color: colors.warning, change: "-2.1%" },
+          { label: "Overdue Claims", value: "$1,120", icon: <AlertCircle size={22} />, color: colors.danger, change: "+0.5%" },
         ].map((stat, i) => (
-          <div key={i} style={styles.statCard}>
-             <div style={{ position: "absolute", top: "-10%", right: "-10%", width: "80px", height: "80px", borderRadius: "50%", backgroundColor: `${stat.color}05` }} />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div style={styles.iconBox(stat.color)}>{stat.icon}</div>
-              <Badge variant={stat.change.startsWith("+") ? "success" : "danger"} style={{ fontSize: "10px", fontWeight: 900, borderRadius: "10px" }}>{stat.change}</Badge>
-            </div>
-            <div style={{ marginTop: "12px" }}>
-              <p style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>{stat.label}</p>
-              <h3 style={{ fontSize: "28px", fontWeight: 900, color: colors.textMain, margin: "4px 0", letterSpacing: "-0.02em" }}>{stat.value}</h3>
+          <div key={i} style={styles.statCardWrapper}>
+            <div 
+              style={styles.statCard(stat.color)}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 20px -5px rgba(0,0,0,0.1)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.05)"; }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={styles.iconWrapper(stat.color)}>{stat.icon}</div>
+                <Badge variant={stat.change.startsWith("+") ? "success" : stat.change.startsWith("-") ? "danger" : "warning"} style={{ fontSize: "10px", fontWeight: 700 }}>{stat.change}</Badge>
+              </div>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: colors.textMuted, margin: "0 0 4px 0" }}>{stat.label}</p>
+                <h3 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{stat.value}</h3>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Filter Bar */}
       <div style={styles.filterBar}>
         <div style={styles.searchInputWrapper}>
-          <Search style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={20} />
+          <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={18} />
           <input 
             style={styles.searchInput}
             placeholder="Search by invoice number or customer name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={(e) => e.target.style.borderColor = colors.primary}
+            onBlur={(e) => e.target.style.borderColor = colors.border}
           />
         </div>
-        <div style={{ display: "flex", gap: "12px", flex: 1 }}>
+        <div style={{ display: "flex", gap: "12px", flex: 2 }}>
           <Select 
             value={statusFilter}
             onChange={(val) => setStatusFilter(val as string)}
@@ -225,216 +315,141 @@ const Billing: React.FC = () => {
               { label: "Pending", value: "pending" },
               { label: "Overdue", value: "overdue" }
             ]}
-            style={{ borderRadius: "16px" }}
+            style={{ borderRadius: "14px", flex: 1 }}
           />
-          <Button variant="secondary" leftIcon={<Download size={20} />} style={{ borderRadius: "16px", padding: "16px 24px", backgroundColor: "white", border: `1px solid ${colors.border}` }}>
-            Export CSV
+          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px 20px", backgroundColor: "white", border: `1px solid ${colors.border}`, flex: 1 }}>
+            Export
           </Button>
         </div>
       </div>
 
-      {/* Invoices Table */}
-      <Card 
-        style={{ borderRadius: "32px", border: `1px solid ${colors.border}`, boxShadow: "0 20px 40px -20px rgba(0,0,0,0.05)", overflow: "hidden" }}
-      >
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
-            <thead>
-              <tr style={styles.tableHeader}>
-                {["Invoice ID", "Customer Entity", "Valuation", "Issued Date", "Status Protocol", "Actions"].map((h, i) => (
-                  <th key={i} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((inv) => (
-                <tr 
-                  key={inv.id} 
-                  style={styles.tr(hoveredRow === inv.id)}
-                  onMouseEnter={() => setHoveredRow(inv.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
-                >
-                  <td style={styles.td}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
-                        <Receipt size={18} />
-                      </div>
-                      <span style={{ fontWeight: 800, color: colors.textMain, fontSize: "14px" }}>{inv.id}</span>
-                    </div>
-                  </td>
-                  <td style={styles.td}>
-                    <div>
-                      <h5 style={{ fontWeight: 800, color: colors.textMain, fontSize: "15px", margin: 0 }}>{inv.customer}</h5>
-                      <p style={{ fontSize: "11px", color: colors.textMuted, fontWeight: 700, textTransform: "uppercase", marginTop: "2px" }}>{inv.method}</p>
-                    </div>
-                  </td>
-                  <td style={styles.td}>
-                    <span style={{ fontSize: "17px", fontWeight: 900, color: colors.textMain }}>{inv.amount}</span>
-                  </td>
-                  <td style={styles.td}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: colors.textMuted }}>{inv.date}</span>
-                  </td>
-                  <td style={styles.td}>
-                    <Badge 
-                      variant={inv.status === "Paid" ? "success" : inv.status === "Pending" ? "warning" : "danger"} 
-                      dot
-                      style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 900, borderRadius: "12px" }}
-                    >
-                      {inv.status}
-                    </Badge>
-                  </td>
-                  <td style={styles.td}>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <IconButton icon={<Printer size={18} />} hoverColor={colors.primary} />
-                      <IconButton icon={<Mail size={18} />} hoverColor={colors.primary} />
-                      <IconButton icon={<Trash2 size={18} />} hoverColor={colors.rose} />
-                    </div>
-                  </td>
-                </tr>
+      <div style={styles.tableContainer}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              {["Invoice ID", "Customer Entity", "Valuation", "Issued Date", "Status", "Actions"].map((h, i) => (
+                <th key={i} style={styles.th}>{h}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
-        <div style={{ padding: "24px 32px", borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMuted }}>Sync: Global Financial Node Active</p>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <Button variant="ghost" style={{ borderRadius: "12px", fontWeight: 700 }}>Previous</Button>
-            <Button variant="secondary" style={{ borderRadius: "12px", fontWeight: 700, backgroundColor: "white", border: `1px solid ${colors.border}` }}>Next Cycle</Button>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceList.map((inv) => (
+              <tr 
+                key={inv.id} 
+                style={styles.tr(hoveredRow === inv.id)}
+                onMouseEnter={() => setHoveredRow(inv.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+              >
+                <td style={styles.td}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primaryDark }}>
+                      <Receipt size={16} />
+                    </div>
+                    <span style={{ fontWeight: 700, color: colors.textMain, fontSize: "14px" }}>{inv.id}</span>
+                  </div>
+                </td>
+                <td style={styles.td}>
+                  <div>
+                    <h5 style={{ fontWeight: 700, color: colors.textMain, fontSize: "15px", margin: 0 }}>{inv.customer}</h5>
+                    <p style={{ fontSize: "11px", color: colors.textMuted, fontWeight: 600, marginTop: "2px" }}>{inv.method}</p>
+                  </div>
+                </td>
+                <td style={styles.td}>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: colors.textMain }}>{inv.amount}</span>
+                </td>
+                <td style={styles.td}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: colors.textMuted }}>{inv.date}</span>
+                </td>
+                <td style={styles.td}>
+                  <Badge 
+                    variant={inv.status === "Paid" ? "success" : inv.status === "Pending" ? "warning" : "danger"} 
+                    dot
+                    style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}
+                  >
+                    {inv.status}
+                  </Badge>
+                </td>
+                <td style={styles.td}>
+                  <div style={{ display: "flex", gap: "4px" }}>
+                    <IconButton icon={<Printer size={16} />} hoverColor={colors.primaryDark} onClick={() => handlePrintInvoice(inv.id)} />
+                    <IconButton icon={<Mail size={16} />} hoverColor={colors.primaryDark} onClick={() => handleEmailInvoice(inv.id)} />
+                    <IconButton icon={<Trash2 size={16} />} hoverColor={colors.danger} onClick={() => handleDeleteInvoice(inv.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#f8fafc" }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: colors.textMuted }}>Displaying last 5 major transactions</p>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button variant="ghost" leftIcon={<ChevronLeft size={16} />} style={{ borderRadius: "10px", fontSize: "13px" }}>Prev</Button>
+            <Button variant="secondary" rightIcon={<ChevronRight size={16} />} style={{ borderRadius: "10px", fontSize: "13px", backgroundColor: "white", border: `1px solid ${colors.border}` }}>Next</Button>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Create Invoice Modal (Pure Inline CSS Implementation) */}
+      {/* Create Invoice Modal */}
       {isModalOpen && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 2000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: isMobile ? "16px" : "40px",
-          animation: "modalFadeIn 0.3s ease-out",
-        }}>
-          {/* Backdrop */}
-          <div 
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "rgba(15, 23, 42, 0.6)",
-              backdropFilter: "blur(8px)",
-            }}
-            onClick={() => setIsModalOpen(false)}
-          />
-          
-          {/* Modal Card */}
-          <div style={{
-            position: "relative",
-            width: "100%",
-            maxWidth: "600px",
-            backgroundColor: "white",
-            borderRadius: "32px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-            animation: "modalZoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}>
-            {/* Modal Header */}
-            <div style={{
-              padding: "32px",
-              borderBottom: `1px solid ${colors.border}`,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}>
-              <h2 style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.04em", margin: 0 }}>Generate New Invoice</h2>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                style={{ padding: "10px", borderRadius: "14px", border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", transition: "all 0.2s ease" }}
-              >
-                <RefreshCw size={20} style={{ transform: "rotate(45deg)" }} />
-              </button>
+        <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(10px)" }} onClick={() => setIsModalOpen(false)} />
+          <div style={{ position: "relative", width: "100%", maxWidth: "540px", backgroundColor: "white", borderRadius: "24px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.3s ease" }}>
+            <div style={{ padding: "24px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0, letterSpacing: "-0.02em" }}>Generate New Invoice</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", display: "flex", padding: "4px", borderRadius: "8px", transition: "background-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}><X size={20} /></button>
             </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: "32px", maxHeight: "70vh", overflowY: "auto" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <label style={{ fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Customer Entity</label>
+            <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Customer Name / Entity</label>
+                <Input 
+                  placeholder="e.g. Alexander Wright" 
+                  style={{ borderRadius: "12px" }} 
+                  value={newInvoice.customer}
+                  onChange={(e) => setNewInvoice({...newInvoice, customer: e.target.value})}
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Billing Amount ($)</label>
                   <Input 
-                    placeholder="Enter customer name or organization" 
-                    value={newInvoice.customer}
-                    onChange={(e) => setNewInvoice({...newInvoice, customer: e.target.value})}
-                    style={{ borderRadius: "16px", padding: "16px 20px" }}
+                    type="number" 
+                    placeholder="0.00" 
+                    style={{ borderRadius: "12px" }} 
+                    value={newInvoice.amount}
+                    onChange={(e) => setNewInvoice({...newInvoice, amount: e.target.value})}
                   />
                 </div>
-                
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "24px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    <label style={{ fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Billing Amount ($)</label>
-                    <Input 
-                      type="number" 
-                      placeholder="0.00" 
-                      value={newInvoice.amount}
-                      onChange={(e) => setNewInvoice({...newInvoice, amount: e.target.value})}
-                      style={{ borderRadius: "16px", padding: "16px 20px" }}
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    <label style={{ fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Payment Method</label>
-                    <Select 
-                      options={[
-                        { label: "Credit Card", value: "Credit Card" },
-                        { label: "Bank Transfer", value: "Bank Transfer" },
-                        { label: "PayPal", value: "PayPal" },
-                        { label: "Apple Pay", value: "Apple Pay" }
-                      ]}
-                      value={newInvoice.method}
-                      onChange={(val) => setNewInvoice({...newInvoice, method: val as string})}
-                      style={{ borderRadius: "16px" }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <label style={{ fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Initial Status Protocol</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Payment Method</label>
                   <Select 
                     options={[
-                      { label: "Pending Execution", value: "Pending" },
-                      { label: "Authenticated (Paid)", value: "Paid" }
+                      { label: "Credit Card", value: "Credit Card" },
+                      { label: "Bank Transfer", value: "Bank Transfer" },
+                      { label: "PayPal", value: "PayPal" },
+                      { label: "Apple Pay", value: "Apple Pay" }
                     ]}
-                    value={newInvoice.status}
-                    onChange={(val) => setNewInvoice({...newInvoice, status: val as string})}
-                    style={{ borderRadius: "16px" }}
+                    style={{ borderRadius: "12px" }} 
+                    value={newInvoice.method}
+                    onChange={(val) => setNewInvoice({...newInvoice, method: val as string})}
                   />
                 </div>
               </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Status Protocol</label>
+                <Select 
+                  options={[
+                    { label: "Pending Execution", value: "Pending" },
+                    { label: "Authenticated (Paid)", value: "Paid" }
+                  ]}
+                  style={{ borderRadius: "12px" }} 
+                  value={newInvoice.status}
+                  onChange={(val) => setNewInvoice({...newInvoice, status: val as string})}
+                />
+              </div>
             </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: "24px 32px",
-              backgroundColor: "#f8fafc",
-              borderTop: `1px solid ${colors.border}`,
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "16px",
-            }}>
-              <Button 
-                variant="secondary" 
-                onClick={() => setIsModalOpen(false)}
-                style={{ borderRadius: "14px", fontWeight: 800, padding: "14px 28px" }}
-              >
-                Abort
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={() => setIsModalOpen(false)} 
-                style={{ backgroundColor: colors.primary, borderRadius: "14px", fontWeight: 800, padding: "14px 28px", boxShadow: `0 10px 20px -5px ${colors.primary}40` }}
-              >
-                Generate Invoice
-              </Button>
+            <div style={{ padding: "20px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <Button variant="ghost" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", fontWeight: 600 }}>Cancel</Button>
+              <Button variant="primary" onClick={handleCreateInvoice} style={{ borderRadius: "12px", backgroundColor: colors.primaryDark, fontWeight: 600 }}>Generate Invoice</Button>
             </div>
           </div>
         </div>
@@ -459,10 +474,13 @@ const Billing: React.FC = () => {
 };
 
 // Helper component for table action buttons to handle inline hover
-const IconButton: React.FC<{ icon: React.ReactNode, hoverColor: string }> = ({ icon, hoverColor }) => {
+const IconButton: React.FC<{ icon: React.ReactNode, hoverColor: string, onClick?: () => void }> = ({ icon, hoverColor, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
     <button 
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         padding: "10px",
         borderRadius: "12px",
@@ -475,8 +493,6 @@ const IconButton: React.FC<{ icon: React.ReactNode, hoverColor: string }> = ({ i
         alignItems: "center",
         justifyContent: "center",
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {icon}
     </button>

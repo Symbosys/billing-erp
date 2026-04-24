@@ -17,7 +17,8 @@ import {
   Calendar,
   MapPin,
   CheckCircle2,
-  Clock
+  Clock,
+  X
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
@@ -49,16 +50,19 @@ const Inventory: React.FC = () => {
   const isTablet = windowWidth < 1024;
 
   const colors = {
-    primary: "#4f46e5",
-    primaryLight: "#818cf8",
-    textMain: "#0f172a",
+    primary: "#6366f1",
+    primaryDark: "#4f46e5",
+    primaryLight: "#e0e7ff",
+    secondary: "#64748b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    textMain: "#1e293b",
     textMuted: "#64748b",
-    border: "rgba(226, 232, 240, 0.7)",
-    rose: "#f43f5e",
-    emerald: "#10b981",
-    amber: "#f59e0b",
-    violet: "#8b5cf6",
     bg: "#f8fafc",
+    card: "#ffffff",
+    border: "#e2e8f0",
   };
 
   const inventoryItems = [
@@ -79,80 +83,112 @@ const Inventory: React.FC = () => {
     container: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: isMobile ? "32px" : "48px",
+      gap: isMobile ? "24px" : "32px",
       paddingBottom: "60px",
-      animation: "fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+      animation: "fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
     },
     header: {
       display: "flex",
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
       justifyContent: "space-between",
       alignItems: isMobile ? "flex-start" : "center",
-      gap: "32px"
+      gap: "24px",
+      marginBottom: "8px"
+    },
+    titleSection: {
+      display: "flex",
+      flexDirection: "column" as const,
+      gap: "4px"
+    },
+    title: {
+      fontSize: isMobile ? "28px" : "36px",
+      fontWeight: 800,
+      color: colors.textMain,
+      letterSpacing: "-0.02em",
+      margin: 0,
+      display: "flex",
+      alignItems: "center",
+      gap: "12px"
+    },
+    subtitle: {
+      color: colors.textMuted,
+      margin: 0,
+      fontWeight: 500,
+      fontSize: isMobile ? "14px" : "16px"
     },
     tabGroup: {
       display: "flex",
-      gap: "8px",
-      padding: "6px",
+      gap: "4px",
+      padding: "4px",
       backgroundColor: "white",
-      borderRadius: "20px",
+      borderRadius: "16px",
       border: `1px solid ${colors.border}`,
       width: "fit-content",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
     },
     tab: (isActive: boolean) => ({
-      padding: "10px 24px",
-      borderRadius: "14px",
+      padding: "8px 20px",
+      borderRadius: "12px",
       border: "none",
       backgroundColor: isActive ? colors.primary : "transparent",
       color: isActive ? "white" : colors.textMuted,
-      fontSize: "13px",
-      fontWeight: 800,
+      fontSize: "14px",
+      fontWeight: 600,
       cursor: "pointer",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      transition: "all 0.2s ease",
       display: "flex",
       alignItems: "center",
       gap: "8px",
     }),
     statsRow: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
-      gap: "24px",
+      display: "flex",
+      overflowX: "auto" as const,
+      gap: isMobile ? "16px" : "24px",
+      padding: "4px 4px 16px 4px",
+      margin: "0 -4px",
+      scrollbarWidth: "none" as const,
+      msOverflowStyle: "none" as const,
+      scrollSnapType: "x mandatory" as const,
+      WebkitOverflowScrolling: "touch" as const,
     },
-    miniStat: (color: string) => ({
-      padding: "28px",
-      borderRadius: "28px",
+    statCardWrapper: {
+      flex: isMobile ? "0 0 280px" : isTablet ? "0 0 300px" : "1",
+      scrollSnapAlign: "start" as const,
+      minWidth: "260px"
+    },
+    statCard: (color: string) => ({
+      padding: isMobile ? "20px" : "24px",
+      borderRadius: "24px",
       backgroundColor: "white",
       border: `1px solid ${colors.border}`,
       display: "flex",
-      gap: "20px",
-      alignItems: "center",
+      flexDirection: "column" as const,
+      gap: "16px",
       transition: "all 0.3s ease",
-      cursor: "pointer",
-      boxShadow: "0 10px 20px rgba(0,0,0,0.01)",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      height: "100%",
     }),
-    iconBox: (color: string) => ({
-      width: "56px",
-      height: "56px",
-      borderRadius: "18px",
+    iconWrapper: (color: string) => ({
+      width: "48px",
+      height: "48px",
+      borderRadius: "14px",
       backgroundColor: `${color}10`,
       color: color,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      boxShadow: `inset 0 0 0 1px ${color}15`,
     }),
     filterBar: {
       display: "flex",
-      flexDirection: isTablet ? ("column" as const) : ("row" as const),
-      gap: "20px",
-      padding: "24px",
+      flexDirection: isMobile ? ("column" as const) : ("row" as const),
+      gap: "16px",
+      padding: isMobile ? "16px" : "20px",
       backgroundColor: "white",
-      borderRadius: "28px",
+      borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 30px -10px rgba(0,0,0,0.04)",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
       position: "sticky" as const,
-      top: "80px",
+      top: "80px", // Aligned with Navbar height
       zIndex: 10,
     }
   };
@@ -161,75 +197,87 @@ const Inventory: React.FC = () => {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: colors.primary, fontWeight: 900, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "8px" }}>
-            <Archive size={16} />
-            Supply Chain Intelligence
-          </div>
-          <h1 style={{ fontSize: isMobile ? "36px" : "48px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.04em", margin: 0 }}>Inventory <span style={{ color: colors.primary }}>Matrix</span></h1>
-          <p style={{ color: colors.textMuted, marginTop: "8px", fontWeight: 500, fontSize: "16px" }}>Orchestrating global assets and inbound logistics with real-time telemetry.</p>
+        <div style={styles.titleSection}>
+          <h1 style={styles.title}>
+            Inventory Matrix
+          </h1>
+          <p style={styles.subtitle}>Real-time oversight of global assets and inbound logistics.</p>
         </div>
-        <div style={{ display: "flex", gap: "16px", width: isMobile ? "100%" : "auto" }}>
-          <Button variant="secondary" leftIcon={<RefreshCw size={20} />} style={{ borderRadius: "18px", padding: "16px", backgroundColor: "white", border: `1px solid ${colors.border}` }} />
+        <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
+          <Button 
+            variant="secondary" 
+            leftIcon={<RefreshCw size={18} />} 
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} 
+          />
           <Button 
             variant="primary" 
-            leftIcon={<Plus size={22} />} 
+            leftIcon={<Plus size={20} />} 
             onClick={() => setIsModalOpen(true)}
-            style={{ borderRadius: "18px", padding: "16px 32px", backgroundColor: colors.primary, boxShadow: "0 10px 25px rgba(79, 70, 229, 0.25)", fontWeight: 800 }}
+            style={{ 
+              borderRadius: "14px", 
+              padding: "12px 24px", 
+              backgroundColor: colors.primaryDark, 
+              boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", 
+              fontWeight: 600 
+            }}
           >
-            Create Inbound
+            New Inbound
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={styles.tabGroup}>
-        <button style={styles.tab(activeTab === "live")} onClick={() => setActiveTab("live")}>
-          <Layers size={18} />
-          Live Inventory
-        </button>
-        <button style={styles.tab(activeTab === "inbound")} onClick={() => setActiveTab("inbound")}>
-          <Truck size={18} />
-          Inbound Stock
-          <span style={{ backgroundColor: activeTab === "inbound" ? "white" : colors.amber, color: activeTab === "inbound" ? colors.primary : "white", padding: "2px 8px", borderRadius: "8px", fontSize: "10px" }}>3</span>
-        </button>
-      </div>
-
-      {/* Stats Mini Grid */}
       <div style={styles.statsRow}>
         {[
-          { label: "Asset Value", value: "$1.4M", icon: <Layers size={24} />, color: colors.primary },
-          { label: "Critical Stock", value: "28 SKU", icon: <AlertTriangle size={24} />, color: colors.rose },
-          { label: "Inbound Flow", value: "156 Unit", icon: <Truck size={24} />, color: colors.violet },
-          { label: "Active Nodes", value: "12 Depot", icon: <MapPin size={24} />, color: colors.amber },
+          { label: "Asset Value", value: "$1.4M", icon: <Layers size={22} />, color: colors.primaryDark, trend: "+8.2%" },
+          { label: "Critical Stock", value: "28 SKU", icon: <AlertTriangle size={22} />, color: colors.danger, trend: "-2.1%" },
+          { label: "Inbound Flow", value: "156 Unit", icon: <Truck size={22} />, color: colors.info, trend: "+12.5%" },
+          { label: "Active Nodes", value: "12 Depot", icon: <MapPin size={22} />, color: colors.warning, trend: "Stable" },
         ].map((stat, i) => (
-          <div 
-            key={i} 
-            style={styles.miniStat(stat.color)}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.boxShadow = "0 15px 30px rgba(0,0,0,0.05)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 10px 20px rgba(0,0,0,0.01)"; }}
-          >
-            <div style={styles.iconBox(stat.color)}>{stat.icon}</div>
-            <div>
-              <p style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>{stat.label}</p>
-              <h4 style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, margin: 0 }}>{stat.value}</h4>
+          <div key={i} style={styles.statCardWrapper}>
+            <div 
+              style={styles.statCard(stat.color)}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 20px -5px rgba(0,0,0,0.1)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.05)"; }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={styles.iconWrapper(stat.color)}>{stat.icon}</div>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: stat.trend.startsWith("+") ? colors.success : stat.trend.startsWith("-") ? colors.danger : colors.textMuted }}>{stat.trend}</span>
+              </div>
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: colors.textMuted, margin: "0 0 4px 0" }}>{stat.label}</p>
+                <h4 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{stat.value}</h4>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Filter & Search Bar */}
+      {/* Tabs */}
+      <div style={styles.tabGroup}>
+        <button style={styles.tab(activeTab === "live")} onClick={() => setActiveTab("live")}>
+          <Layers size={16} />
+          Live Inventory
+        </button>
+        <button style={styles.tab(activeTab === "inbound")} onClick={() => setActiveTab("inbound")}>
+          <Truck size={16} />
+          Inbound Stock
+          <span style={{ backgroundColor: activeTab === "inbound" ? "white" : colors.warning, color: activeTab === "inbound" ? colors.primaryDark : "white", padding: "1px 6px", borderRadius: "6px", fontSize: "10px", marginLeft: "4px" }}>3</span>
+        </button>
+      </div>
+
       <div style={styles.filterBar}>
-        <div style={{ position: "relative", flex: 2 }}>
-          <Search style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={20} />
+        <div style={{ position: "relative", flex: 3 }}>
+          <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={18} />
           <input 
-            style={{ width: "100%", padding: "16px 20px 16px 56px", borderRadius: "18px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "15px", fontWeight: 600 }}
+            style={{ width: "100%", padding: "12px 16px 12px 48px", borderRadius: "14px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px", fontWeight: 500, transition: "border-color 0.2s" }}
             placeholder={activeTab === "live" ? "Search assets by SKU, ID..." : "Search shipments by ID, source..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={(e) => e.target.style.borderColor = colors.primary}
+            onBlur={(e) => e.target.style.borderColor = colors.border}
           />
         </div>
-        <div style={{ display: "flex", gap: "12px", flex: 1 }}>
+        <div style={{ display: "flex", gap: "12px", flex: 2 }}>
           <Select 
             value={filterCategory}
             onChange={(val) => setFilterCategory(val as string)}
@@ -239,10 +287,10 @@ const Inventory: React.FC = () => {
               { label: "Furniture", value: "furn" },
               { label: "Logistics", value: "logi" }
             ]}
-            style={{ borderRadius: "16px" }}
+            style={{ borderRadius: "14px", flex: 1 }}
           />
-          <Button variant="secondary" leftIcon={<Download size={20} />} style={{ borderRadius: "16px", padding: "16px 24px", backgroundColor: "white", border: `1px solid ${colors.border}` }}>
-            Export Report
+          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px 20px", backgroundColor: "white", border: `1px solid ${colors.border}`, flex: 1 }}>
+            Export
           </Button>
         </div>
       </div>
@@ -253,11 +301,11 @@ const Inventory: React.FC = () => {
       >
         <div style={{ overflowX: "auto" }}>
           {activeTab === "live" ? (
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: "1000px" }}>
               <thead>
-                <tr style={{ backgroundColor: "#fafafa", borderBottom: `1px solid ${colors.border}` }}>
-                  {["Asset Details", "SKU Identity", "Global Stock", "Valuation", "Operational Status", "Actions"].map((h, i) => (
-                    <th key={i} style={{ padding: "28px 32px", textAlign: "left", fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>{h}</th>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  {["Asset Details", "SKU Identity", "Global Stock", "Valuation", "Status", "Actions"].map((h, i) => (
+                    <th key={i} style={{ padding: "16px 24px", textAlign: "left", fontSize: "12px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: `1px solid ${colors.border}` }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -269,34 +317,34 @@ const Inventory: React.FC = () => {
                     onMouseEnter={() => setHoveredRow(item.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                        <div style={{ width: "48px", height: "48px", borderRadius: "14px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
-                          <Box size={22} />
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "12px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primaryDark }}>
+                          <Box size={20} />
                         </div>
                         <div>
-                          <h5 style={{ fontWeight: 800, color: colors.textMain, fontSize: "16px", margin: 0 }}>{item.name}</h5>
-                          <p style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 600, marginTop: "2px" }}>{item.category}</p>
+                          <h5 style={{ fontWeight: 700, color: colors.textMain, fontSize: "15px", margin: 0 }}>{item.name}</h5>
+                          <p style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 500, marginTop: "2px" }}>{item.category}</p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <code style={{ fontSize: "13px", fontWeight: 700, backgroundColor: "#f1f5f9", padding: "6px 12px", borderRadius: "8px", color: colors.primary }}>{item.sku}</code>
+                    <td style={{ padding: "16px 24px" }}>
+                      <code style={{ fontSize: "12px", fontWeight: 600, backgroundColor: colors.bg, padding: "4px 8px", borderRadius: "6px", color: colors.primaryDark, border: `1px solid ${colors.border}` }}>{item.sku}</code>
                     </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span style={{ fontSize: "15px", fontWeight: 800, color: colors.textMain }}>{item.stock} units</span>
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: item.trend.startsWith("+") ? colors.emerald : colors.rose }}>{item.trend}</span>
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 700, color: colors.textMain }}>{item.stock}</span>
+                        <span style={{ fontSize: "11px", fontWeight: 600, color: item.trend.startsWith("+") ? colors.success : colors.danger }}>{item.trend}</span>
                       </div>
                     </td>
-                    <td style={{ padding: "24px 32px", fontSize: "18px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.02em" }}>{item.price}</td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <Badge variant={item.status === "In Stock" ? "success" : item.status === "Low Stock" ? "warning" : "danger"} dot style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 900, borderRadius: "12px" }}>{item.status}</Badge>
+                    <td style={{ padding: "16px 24px", fontSize: "15px", fontWeight: 700, color: colors.textMain }}>{item.price}</td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <Badge variant={item.status === "In Stock" ? "success" : item.status === "Low Stock" ? "warning" : "danger"} dot style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}>{item.status}</Badge>
                     </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <IconButton icon={<Edit size={18} />} hoverColor={colors.primary} />
-                        <IconButton icon={<Trash2 size={18} />} hoverColor={colors.rose} />
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <IconButton icon={<Edit size={16} />} hoverColor={colors.primaryDark} />
+                        <IconButton icon={<Trash2 size={16} />} hoverColor={colors.danger} />
                       </div>
                     </td>
                   </tr>
@@ -370,55 +418,55 @@ const Inventory: React.FC = () => {
       {isModalOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(10px)" }} onClick={() => setIsModalOpen(false)} />
-          <div style={{ position: "relative", width: "100%", maxWidth: "600px", backgroundColor: "white", borderRadius: "32px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.4s ease" }}>
-            <div style={{ padding: "32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, margin: 0, letterSpacing: "-0.04em" }}>Provision Inbound Stock</h2>
-              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer" }}><RefreshCw size={20} style={{ transform: "rotate(45deg)" }} /></button>
+          <div style={{ position: "relative", width: "100%", maxWidth: "540px", backgroundColor: "white", borderRadius: "24px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.3s ease" }}>
+            <div style={{ padding: "24px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0, letterSpacing: "-0.02em" }}>New Inbound Shipment</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", display: "flex", padding: "4px", borderRadius: "8px", transition: "background-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}><X size={20} /></button>
             </div>
-            <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "24px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Asset Identification</label>
+            <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Product Name / SKU</label>
                 <Input 
-                  placeholder="Enter product name or SKU" 
-                  style={{ borderRadius: "16px" }} 
+                  placeholder="e.g. Wireless Headphones" 
+                  style={{ borderRadius: "12px" }} 
                   value={inboundForm.name}
                   onChange={(e) => setInboundForm({ ...inboundForm, name: e.target.value })}
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Units arriving</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Quantity</label>
                   <Input 
                     type="number" 
-                    placeholder="Quantity" 
-                    style={{ borderRadius: "16px" }} 
+                    placeholder="0" 
+                    style={{ borderRadius: "12px" }} 
                     value={inboundForm.qty}
                     onChange={(e) => setInboundForm({ ...inboundForm, qty: e.target.value })}
                   />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Expected ETA</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Expected ETA</label>
                   <Input 
                     type="date" 
-                    style={{ borderRadius: "16px" }} 
+                    style={{ borderRadius: "12px" }} 
                     value={inboundForm.eta}
                     onChange={(e) => setInboundForm({ ...inboundForm, eta: e.target.value })}
                   />
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "11px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>Source Logistics Hub</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Storage Hub</label>
                 <Select 
-                  options={[{label: "Global Depot A", value: "a"}, {label: "Regional Whse B", value: "b"}]} 
-                  style={{ borderRadius: "16px" }} 
+                  options={[{label: "Global Depot Alpha", value: "a"}, {label: "Regional Warehouse Beta", value: "b"}]} 
+                  style={{ borderRadius: "12px" }} 
                   value={inboundForm.hub}
                   onChange={(val) => setInboundForm({ ...inboundForm, hub: val as string })}
                 />
               </div>
             </div>
-            <div style={{ padding: "24px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-              <Button variant="secondary" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "14px" }}>Cancel</Button>
-              <Button variant="primary" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "14px", backgroundColor: colors.primary }}>Initiate Inbound</Button>
+            <div style={{ padding: "20px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <Button variant="ghost" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", fontWeight: 600 }}>Cancel</Button>
+              <Button variant="primary" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", backgroundColor: colors.primaryDark, fontWeight: 600 }}>Create Shipment</Button>
             </div>
           </div>
         </div>
