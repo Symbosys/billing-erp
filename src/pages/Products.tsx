@@ -1,40 +1,29 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
-  Maximize2,
   X,
-  ChevronRight,
   LayoutGrid,
   List as ListIcon,
   Package, 
   Search, 
   Plus, 
-  Filter, 
   Download, 
   Tag, 
   Layers, 
-  Box,
-  MoreVertical,
   Edit,
   Trash2,
-  ArrowUpRight,
-  TrendingUp,
   Zap,
   DollarSign,
-  Globe
+  Globe,
+  ArrowRight
 } from "lucide-react";
 import Button from "../components/Button";
-import Input from "../components/Input";
 import Badge from "../components/Badge";
+import Input from "../components/Input";
 import Select from "../components/Select";
+import { useTheme } from "../context/ThemeContext";
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "../config/hooks/useProduct";
 
-const INITIAL_PRODUCTS = [
-  { id: 1, name: "Premium Wireless Headphones", price: "$299.00", category: "Electronics", brand: "Sony", stock: 45, rating: 4.8, sales: "1.2k" },
-  { id: 2, name: "Ergonomic Office Chair", price: "$450.00", category: "Furniture", brand: "Herman Miller", stock: 12, rating: 4.9, sales: "840" },
-  { id: 3, name: "Mechanical Gaming Keyboard", price: "$120.00", category: "Electronics", brand: "Keychron", stock: 89, rating: 4.7, sales: "2.4k" },
-  { id: 4, name: "Minimalist Desk Lamp", price: "$85.00", category: "Decor", brand: "IKEA", stock: 32, rating: 4.5, sales: "560" },
-  { id: 5, name: "UltraWide 4K Monitor", price: "$799.00", category: "Electronics", brand: "Dell", stock: 8, rating: 4.9, sales: "320" },
-  { id: 6, name: "Leather Travel Journal", price: "$45.00", category: "Stationery", brand: "Moleskine", stock: 120, rating: 4.6, sales: "1.8k" },
-];
+// Static products removed in favor of dynamic API data
 
 const Products: React.FC = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -48,8 +37,13 @@ const Products: React.FC = () => {
     brand: "",
     stock: ""
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [productList, setProductList] = useState(INITIAL_PRODUCTS);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // API Data
+  const { data: productList = [], isLoading } = useProducts();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -57,16 +51,18 @@ const Products: React.FC = () => {
     setFormData({ name: "", price: "", category: "Electronics", brand: "", stock: "" });
   };
 
-  const handleDeleteProduct = (id: number) => {
-    setProductList(productList.filter(p => p.id !== id));
+  const handleDeleteProduct = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this asset?")) {
+      deleteProduct.mutate(id);
+    }
   };
 
   const openEditModal = (product: any) => {
     setFormData({
       name: product.name,
-      price: product.price.replace('$', ''),
+      price: product.price.toString(),
       category: product.category,
-      brand: product.brand,
+      brand: product.brand || "",
       stock: product.stock.toString()
     });
     setEditingId(product.id);
@@ -85,26 +81,52 @@ const Products: React.FC = () => {
   const filteredProducts = useMemo(() => {
     return productList.filter(p => 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [productList, searchQuery]);
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-    info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#f8fafc",
-    card: "#ffffff",
-    border: "#e2e8f0",
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      alert("Product Identifier is required.");
+      return;
+    }
+    
+    const priceVal = parseFloat(formData.price);
+    if (isNaN(priceVal) || priceVal <= 0) {
+      alert("Valuation must be a positive number.");
+      return;
+    }
+
+    const stockVal = parseInt(formData.stock);
+    if (isNaN(stockVal) || stockVal < 0) {
+      alert("Stock Level must be 0 or greater.");
+      return;
+    }
+
+    const payload = {
+      name: formData.name,
+      brand: formData.brand,
+      price: priceVal,
+      stock: stockVal,
+      category: formData.category
+    };
+
+    if (editingId) {
+      updateProduct.mutate({ id: editingId, ...payload }, {
+        onSuccess: () => closeModal(),
+        onError: (err: any) => alert(err?.response?.data?.message || err.message || "Failed to update product")
+      });
+    } else {
+      createProduct.mutate(payload, {
+        onSuccess: () => closeModal(),
+        onError: (err: any) => alert(err?.response?.data?.message || err.message || "Failed to create product")
+      });
+    }
   };
+
+  const { theme, colors } = useTheme();
 
 
   const styles = {
@@ -156,16 +178,12 @@ const Products: React.FC = () => {
       scrollSnapAlign: "start" as const,
       minWidth: "260px"
     },
-    statCard: (color: string) => ({
+    statCard: (_color: string) => ({
       padding: isMobile ? "20px" : "24px",
       borderRadius: "24px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
-      display: "flex",
-      flexDirection: "column" as const,
-      gap: "16px",
-      transition: "all 0.3s ease",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       height: "100%",
     }),
     iconWrapper: (color: string) => ({
@@ -183,10 +201,10 @@ const Products: React.FC = () => {
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
       gap: "16px",
       padding: isMobile ? "16px" : "20px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       position: "sticky" as const,
       top: "80px",
       zIndex: 10,
@@ -213,13 +231,15 @@ const Products: React.FC = () => {
     },
     productCard: {
       borderRadius: "24px",
-      border: `1px solid ${colors.border}`,
-      backgroundColor: "white",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: colors.border,
+      backgroundColor: colors.card,
       transition: "all 0.3s ease",
       overflow: "hidden",
       position: "relative" as const,
       cursor: "pointer",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
     },
     modalOverlay: {
       position: "fixed" as const,
@@ -227,7 +247,7 @@ const Products: React.FC = () => {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(15, 23, 42, 0.6)",
+      backgroundColor: "rgba(15, 23, 42, 0.8)",
       backdropFilter: "blur(8px)",
       display: "flex",
       alignItems: "center",
@@ -236,49 +256,30 @@ const Products: React.FC = () => {
       animation: "fadeIn 0.3s ease",
     },
     modalContent: {
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "32px",
       width: isMobile ? "95%" : "600px",
       maxHeight: "90vh",
       overflowY: "auto" as const,
-      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+      boxShadow: "var(--card-shadow)",
+      border: `1px solid ${colors.border}`,
       position: "relative" as const,
       animation: "modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
     },
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      setProductList(productList.map(p => 
-        p.id === editingId 
-          ? { ...p, ...formData, price: `$${formData.price}`, stock: parseInt(formData.stock) } 
-          : p
-      ));
-    } else {
-      const newProduct = {
-        id: Math.max(0, ...productList.map(p => p.id)) + 1,
-        ...formData,
-        price: `$${formData.price}`,
-        stock: parseInt(formData.stock),
-        rating: 5.0,
-        sales: "0"
-      };
-      setProductList([newProduct, ...productList]);
-    }
-    closeModal();
-  };
+
 
   return (
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.titleSection}>
-          <h1 style={styles.title}>Product Catalog</h1>
+          <h1 style={styles.title}>Product Catalog {productList.length > 0 && <span style={{ fontSize: "20px", verticalAlign: "middle", opacity: 0.5 }}>({productList.length})</span>}</h1>
           <p style={styles.subtitle}>Curate and manage high-performance global assets and inventory.</p>
         </div>
         <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
-          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} />
+          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }} />
           <Button 
             variant="primary" 
             leftIcon={<Plus size={20} />} 
@@ -293,10 +294,34 @@ const Products: React.FC = () => {
       {/* Product Stats Slider */}
       <div style={styles.statsSlider}>
         {[
-          { label: "Total Inventory", value: "4,280", icon: <Package size={22} />, color: colors.primary, change: "+120 today" },
-          { label: "Active Brands", value: "18 Global", icon: <Zap size={22} />, color: colors.warning, change: "Live Sync" },
-          { label: "Stock Valuation", value: "$840,200", icon: <DollarSign size={22} />, color: colors.success, change: "+14.2%" },
-          { label: "Market Reach", value: "92 Countries", icon: <Globe size={22} />, color: colors.info, change: "Expanding" },
+          { 
+            label: "Total Inventory", 
+            value: productList.length.toLocaleString(), 
+            icon: <Package size={22} />, 
+            color: colors.primary, 
+            change: `${productList.filter(p => p.stock < 10).length} low stock` 
+          },
+          { 
+            label: "Active Brands", 
+            value: new Set(productList.map(p => p.brand).filter(Boolean)).size + " Assets", 
+            icon: <Zap size={22} />, 
+            color: colors.warning, 
+            change: "Live Sync" 
+          },
+          { 
+            label: "Stock Valuation", 
+            value: `$${productList.reduce((acc, p) => acc + (p.price * p.stock), 0).toLocaleString()}`, 
+            icon: <DollarSign size={22} />, 
+            color: colors.success, 
+            change: `${productList.reduce((acc, p) => acc + p.stock, 0)} units` 
+          },
+          { 
+            label: "Category Reach", 
+            value: new Set(productList.map(p => p.category)).size + " Sectors", 
+            icon: <Globe size={22} />, 
+            color: colors.info, 
+            change: "Operational" 
+          },
         ].map((stat, i) => (
           <div key={i} style={styles.statCardWrapper}>
             <div 
@@ -320,14 +345,12 @@ const Products: React.FC = () => {
       {/* Filter & View Bar */}
       <div style={styles.filterBar}>
         <div style={styles.searchInputWrapper}>
-          <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={18} />
-          <input 
-            style={styles.searchInput}
+          <Input 
+            leftIcon={<Search size={18} />}
             placeholder="Search products, brands, or categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={(e) => e.target.style.borderColor = colors.primary}
-            onBlur={(e) => e.target.style.borderColor = colors.border}
+            style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
           />
         </div>
         
@@ -342,13 +365,13 @@ const Products: React.FC = () => {
           <div style={{ display: "flex", gap: "4px", padding: "4px", backgroundColor: colors.bg, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
             <button 
               onClick={() => setViewMode("grid")}
-              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: viewMode === "grid" ? "white" : "transparent", color: viewMode === "grid" ? colors.primaryDark : colors.textMuted, boxShadow: viewMode === "grid" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: viewMode === "grid" ? (theme === "light" ? "white" : "rgba(255,255,255,0.1)") : "transparent", color: viewMode === "grid" ? colors.primaryDark : colors.textMuted, boxShadow: viewMode === "grid" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
               <LayoutGrid size={18} />
             </button>
             <button 
               onClick={() => setViewMode("list")}
-              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: viewMode === "list" ? "white" : "transparent", color: viewMode === "list" ? colors.primaryDark : colors.textMuted, boxShadow: viewMode === "list" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: viewMode === "list" ? (theme === "light" ? "white" : "rgba(255,255,255,0.1)") : "transparent", color: viewMode === "list" ? colors.primaryDark : colors.textMuted, boxShadow: viewMode === "list" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
               <ListIcon size={18} />
             </button>
@@ -358,7 +381,19 @@ const Products: React.FC = () => {
 
       {/* Product Grid */}
       <div style={styles.productGrid}>
-        {filteredProducts.map((product) => (
+        {isLoading ? (
+          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "100px 0", color: colors.textMuted }}>
+            <Zap size={48} className="animate-pulse" style={{ margin: "0 auto 16px", opacity: 0.5 }} />
+            <p style={{ fontSize: "18px", fontWeight: 600 }}>Synchronizing Inventory...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "100px 0", color: colors.textMuted }}>
+            <Package size={48} style={{ margin: "0 auto 16px", opacity: 0.5 }} />
+            <p style={{ fontSize: "18px", fontWeight: 600 }}>No assets found</p>
+            <p style={{ fontSize: "14px" }}>Try adjusting your search or add a new product.</p>
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
           <div 
             key={product.id} 
             style={styles.productCard}
@@ -388,11 +423,11 @@ const Products: React.FC = () => {
               <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
                 <div style={{ flex: 1, padding: "12px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
                   <p style={{ fontSize: "10px", fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>Price</p>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: colors.textMain, margin: "2px 0 0 0" }}>{product.price}</p>
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: colors.textMain, margin: "2px 0 0 0" }}>${product.price.toFixed(2)}</p>
                 </div>
                 <div style={{ flex: 1, padding: "12px", borderRadius: "16px", backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
-                  <p style={{ fontSize: "10px", fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>Sales</p>
-                  <p style={{ fontSize: "16px", fontWeight: 700, color: colors.textMain, margin: "2px 0 0 0" }}>{product.sales}</p>
+                  <p style={{ fontSize: "10px", fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>ID</p>
+                  <p style={{ fontSize: "12px", fontWeight: 600, color: colors.textMain, margin: "2px 0 0 0", overflow: "hidden", textOverflow: "ellipsis" }}>{product.id.slice(-6)}</p>
                 </div>
               </div>
 
@@ -425,7 +460,7 @@ const Products: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       {/* Add Product Modal */}
@@ -448,98 +483,88 @@ const Products: React.FC = () => {
             <div style={{ padding: "32px" }}>
               <form style={{ display: "flex", flexDirection: "column", gap: "24px" }} onSubmit={handleSubmit}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Product Identifier</label>
-                  <div style={{ position: "relative" }}>
-                    <Package size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                    <input 
-                      style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                      placeholder="e.g. Quantum Processor X1"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      required
+                  <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Product Identifier</label>
+                  <Input 
+                    leftIcon={<Package size={18} />}
+                    placeholder="e.g. Quantum Processor X1"
+                    style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
+                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Valuation (USD)</label>
+                    <Input 
+                      type="number"
+                      leftIcon={<DollarSign size={18} />}
+                      placeholder="0.00"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Stock Level</label>
+                    <Input 
+                      type="number"
+                      leftIcon={<Layers size={18} />}
+                      placeholder="Available units"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      value={formData.stock}
+                      onChange={(e) => setFormData({...formData, stock: e.target.value})}
                     />
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Valuation (USD)</label>
-                    <div style={{ position: "relative" }}>
-                      <DollarSign size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        type="number"
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="0.00"
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
-                        required
-                      />
-                    </div>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Manufacturer / Brand</label>
+                    <Input 
+                      leftIcon={<Tag size={18} />}
+                      placeholder="e.g. Sony / Apple"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      value={formData.brand}
+                      onChange={(e) => setFormData({...formData, brand: e.target.value})}
+                    />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Stock Level</label>
-                    <div style={{ position: "relative" }}>
-                      <Layers size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        type="number"
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="Available units"
-                        value={formData.stock}
-                        onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
-                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Manufacturer / Brand</label>
-                    <div style={{ position: "relative" }}>
-                      <Tag size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="e.g. Sony / Apple"
-                        value={formData.brand}
-                        onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Classification</label>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Classification</label>
                     <Select 
                       value={formData.category}
                       onChange={(val) => setFormData({...formData, category: val as string})}
                       options={[
-                        { label: "Electronics", value: "Electronics" },
-                        { label: "Furniture", value: "Furniture" },
-                        { label: "Decor", value: "Decor" },
-                        { label: "Stationery", value: "Stationery" },
+                        { label: "Electronics Node", value: "Electronics" },
+                        { label: "Furniture Asset", value: "Furniture" },
+                        { label: "Decor Module", value: "Decor" },
+                        { label: "Stationery Unit", value: "Stationery" },
                       ]}
-                      style={{ borderRadius: "12px" }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
                     />
                   </div>
                 </div>
 
-                <div style={{ padding: "24px 0", borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "12px" }}>
-                  <button 
-                    type="button"
-                    onClick={closeModal}
-                    style={{ padding: "12px 24px", borderRadius: "14px", border: `1px solid ${colors.border}`, backgroundColor: "white", color: colors.textMuted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
-                  >
-                    Cancel
-                  </button>
-                  <button 
+                <div style={{ padding: "24px 0", borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+                  <Button variant="ghost" onClick={closeModal} style={{ borderRadius: "14px", fontWeight: 700 }}>Discard</Button>
+                  <Button 
                     type="submit"
-                    style={{ padding: "12px 32px", borderRadius: "14px", border: "none", backgroundColor: colors.primaryDark, color: "white", fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", transition: "all 0.2s ease" }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                    variant="primary" 
+                    disabled={createProduct.isPending || updateProduct.isPending}
+                    rightIcon={createProduct.isPending || updateProduct.isPending ? <Zap size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+                    style={{ 
+                      borderRadius: "16px", 
+                      padding: "14px 32px", 
+                      backgroundColor: (createProduct.isPending || updateProduct.isPending) ? colors.textMuted : colors.primaryDark, 
+                      fontWeight: 800, 
+                      fontSize: "14px",
+                      boxShadow: (createProduct.isPending || updateProduct.isPending) ? "none" : `0 8px 15px -3px ${colors.primaryDark}40`,
+                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      cursor: (createProduct.isPending || updateProduct.isPending) ? "not-allowed" : "pointer"
+                    }}
                   >
-                    {editingId ? "Apply Changes" : "Deploy Asset"}
-                  </button>
+                    {createProduct.isPending || updateProduct.isPending ? "Synchronizing..." : (editingId ? "Update Asset" : "Save Asset")}
+                  </Button>
                 </div>
               </form>
             </div>

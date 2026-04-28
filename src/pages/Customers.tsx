@@ -2,9 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   Search, 
   Plus, 
-  Filter, 
   Download, 
-  MoreVertical, 
   Users, 
   TrendingUp, 
   Clock, 
@@ -15,34 +13,38 @@ import {
   List as ListIcon, 
   ChevronRight,
   Trash2,
-  CalendarDays,
-  ArrowUpRight,
   X,
-  ShieldCheck
+  ShieldCheck,
+  ArrowRight
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
-import Card from "../components/Card";
-import Modal from "../components/Modal";
 import Input from "../components/Input";
 import Select from "../components/Select";
-
-// --- Mock Data ---
-const INITIAL_CUSTOMERS = [
-  { id: 1, name: "Alexander Wright", email: "alex.wright@quantum.io", phone: "+1 (555) 012-3456", location: "San Francisco, CA", status: "Active", joined: "Oct 12, 2023", revenue: 45200, avatar: "AW" },
-  { id: 2, name: "Sophia Chen", email: "s.chen@nexus-tech.com", phone: "+1 (555) 012-7890", location: "New York, NY", status: "Active", joined: "Nov 05, 2023", revenue: 128400, avatar: "SC" },
-  { id: 3, name: "Marcus Miller", email: "marcus.m@vortex.net", phone: "+1 (555) 012-1122", location: "Austin, TX", status: "Pending", joined: "Dec 01, 2023", revenue: 0, avatar: "MM" },
-  { id: 4, name: "Elena Rodriguez", email: "elena.r@horizon.com", phone: "+1 (555) 012-3344", location: "Chicago, IL", status: "Active", joined: "Jan 15, 2024", revenue: 67900, avatar: "ER" },
-  { id: 5, name: "Julian Thorne", email: "j.thorne@stellar.com", phone: "+1 (555) 012-5566", location: "Seattle, WA", status: "Inactive", joined: "Feb 20, 2024", revenue: 12400, avatar: "JT" },
-  { id: 6, name: "Aria Montgomery", email: "aria.m@nebula.io", phone: "+1 (555) 012-7788", location: "Denver, CO", status: "Active", joined: "Mar 10, 2024", revenue: 89000, avatar: "AM" },
-];
+import { useTheme } from "../context/ThemeContext";
+import { useCustomers, useCreateCustomer, useDeleteCustomer } from "../config/hooks/useCustomer";
 
 const Customers: React.FC = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("latest");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
+  
+  const { data: fetchedCustomers = [] } = useCustomers();
+  const createCustomerMutation = useCreateCustomer();
+  const deleteCustomerMutation = useDeleteCustomer();
+
+  const customers = useMemo(() => {
+    return fetchedCustomers.map(c => ({
+      ...c,
+      email: "Not provided",
+      location: "Not provided",
+      status: "Active",
+      joined: new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      revenue: c.price || 0,
+      avatar: (c.name || "UK").split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)
+    }));
+  }, [fetchedCustomers]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const itemsPerPage = 8;
@@ -69,7 +71,7 @@ const Customers: React.FC = () => {
       .sort((a, b) => {
         if (sortBy === "name") return a.name.localeCompare(b.name);
         if (sortBy === "revenue") return b.revenue - a.revenue;
-        return b.id - a.id;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
   }, [customers, searchQuery, sortBy]);
 
@@ -84,46 +86,35 @@ const Customers: React.FC = () => {
     email: "",
     phone: "",
     location: "",
-    status: "Active"
+    status: "Active",
+    price: 0
   });
 
-  const handleAddCustomer = (e: React.FormEvent) => {
+  const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newCustomer = {
-      ...formData,
-      id: customers.length + 1,
-      joined: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      revenue: 0,
-      avatar: formData.name.split(" ").map(n => n[0]).join("").toUpperCase()
-    };
-    setCustomers([newCustomer, ...customers]);
-    setIsAddModalOpen(false);
-    setFormData({ name: "", email: "", phone: "", location: "", status: "Active" });
+    try {
+      await createCustomerMutation.mutateAsync({
+        name: formData.name,
+        phone: formData.phone,
+        price: Number(formData.price) || 0,
+      });
+      setIsAddModalOpen(false);
+      setFormData({ name: "", email: "", phone: "", location: "", status: "Active", price: 0 });
+    } catch (error) {
+      console.error("Failed to add customer", error);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setCustomers(customers.filter(c => c.id !== id));
+  const handleDelete = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this customer?")) {
+      deleteCustomerMutation.mutate(id);
+    }
   };
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-    info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#f8fafc",
-    card: "#ffffff",
-    border: "#e2e8f0",
-  };
-
+  const { theme, colors } = useTheme();
   const shadows = {
-    soft: "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
-    premium: "0 20px 40px -12px rgba(79, 70, 229, 0.25)",
+    soft: theme === "light" ? "0 4px 20px -2px rgba(0, 0, 0, 0.05)" : "0 4px 20px -2px rgba(0, 0, 0, 0.3)",
+    premium: theme === "light" ? "0 20px 40px -12px rgba(79, 70, 229, 0.25)" : "0 20px 40px -12px rgba(0, 0, 0, 0.5)",
   };
 
   const stats = [
@@ -183,12 +174,12 @@ const Customers: React.FC = () => {
       scrollSnapAlign: "start" as const,
       minWidth: "260px"
     },
-    statCard: (color: string) => ({
+    statCard: (_color: string) => ({
       padding: isMobile ? "20px" : "24px",
       borderRadius: "24px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       display: "flex",
       flexDirection: "column" as const,
       gap: "16px",
@@ -211,10 +202,10 @@ const Customers: React.FC = () => {
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
       gap: "16px",
       padding: isMobile ? "16px" : "20px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       position: "sticky" as const,
       top: "80px",
       zIndex: 10,
@@ -240,10 +231,10 @@ const Customers: React.FC = () => {
       gap: isMobile ? "20px" : "24px",
     },
     customerCard: {
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       transition: "all 0.3s ease",
       overflow: "hidden",
       display: "flex",
@@ -273,9 +264,9 @@ const Customers: React.FC = () => {
     pageBtn: (isActive: boolean) => ({
       width: "52px",
       height: "52px",
-      borderRadius: "18px",
+      borderRadius: isActive ? "18px" : "18px",
       border: isActive ? "none" : `1px solid ${colors.border}`,
-      backgroundColor: isActive ? colors.primary : "white",
+      backgroundColor: isActive ? colors.primary : colors.card,
       color: isActive ? "white" : colors.textMain,
       fontWeight: 900,
       fontSize: "15px",
@@ -302,11 +293,12 @@ const Customers: React.FC = () => {
       padding: "20px",
     },
     modalContent: {
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "32px",
       width: "100%",
       maxWidth: "600px",
-      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+      boxShadow: "var(--card-shadow)",
+      border: `1px solid ${colors.border}`,
       overflow: "hidden",
       animation: "modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
     }
@@ -323,7 +315,7 @@ const Customers: React.FC = () => {
         <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
           <Button 
             variant="secondary" 
-            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }}
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }}
             leftIcon={<Download size={18} />}
           />
           <Button 
@@ -399,13 +391,13 @@ const Customers: React.FC = () => {
           <div style={{ display: "flex", gap: "4px", padding: "4px", backgroundColor: colors.bg, borderRadius: "12px", border: `1px solid ${colors.border}` }}>
             <button 
               onClick={() => setView("grid")}
-              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "grid" ? "white" : "transparent", color: view === "grid" ? colors.primaryDark : colors.textMuted, boxShadow: view === "grid" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "grid" ? (theme === "light" ? "white" : "rgba(255,255,255,0.1)") : "transparent", color: view === "grid" ? colors.primaryDark : colors.textMuted, boxShadow: view === "grid" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
               <LayoutGrid size={18} />
             </button>
             <button 
               onClick={() => setView("list")}
-              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "list" ? "white" : "transparent", color: view === "list" ? colors.primaryDark : colors.textMuted, boxShadow: view === "list" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
+              style={{ padding: "8px", borderRadius: "10px", border: "none", cursor: "pointer", display: "flex", backgroundColor: view === "list" ? (theme === "light" ? "white" : "rgba(255,255,255,0.1)") : "transparent", color: view === "list" ? colors.primaryDark : colors.textMuted, boxShadow: view === "list" ? "0 4px 6px -1px rgba(0,0,0,0.05)" : "none", transition: "all 0.2s ease" }}
             >
               <ListIcon size={18} />
             </button>
@@ -482,11 +474,11 @@ const Customers: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div style={{ backgroundColor: "white", borderRadius: "40px", border: `1px solid ${colors.border}`, boxShadow: shadows.soft, overflow: "hidden" }}>
+          <div style={{ backgroundColor: colors.card, borderRadius: "40px", border: `1px solid ${colors.border}`, boxShadow: shadows.soft, overflow: "hidden" }}>
             <div style={{ overflowX: "auto" }} className="custom-scrollbar">
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1100px" }}>
                 <thead>
-                  <tr style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: "rgba(248, 250, 252, 0.8)" }}>
+                  <tr style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: theme === "light" ? "rgba(248, 250, 252, 0.8)" : "rgba(255, 255, 255, 0.02)" }}>
                     {["Entity Profile", "Digital Access", "Geographic Region", "Status Log", "Revenue Flow", "Actions"].map((th, i) => (
                       <th key={i} style={{ padding: "28px 40px", fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.2em", textAlign: th === "Revenue Flow" ? "right" : "left" }}>
                         {th}
@@ -499,12 +491,12 @@ const Customers: React.FC = () => {
                     <tr key={customer.id} style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease" }} className="hover:bg-slate-50/50">
                       <td style={{ padding: "24px 40px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                          <div style={{ width: "52px", height: "52px", borderRadius: "18px", backgroundColor: "white", color: colors.primary, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: `1px solid ${colors.primary}10` }}>
+                          <div style={{ width: "52px", height: "52px", borderRadius: "18px", backgroundColor: colors.bg, color: colors.primary, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: `1px solid ${colors.primary}10` }}>
                             {customer.avatar}
                           </div>
                           <div>
                             <h4 style={{ fontWeight: 900, color: colors.textMain, fontSize: "16px", margin: 0 }}>{customer.name}</h4>
-                            <p style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 600, marginTop: "2px" }}>#CUST-ID-2024-0{customer.id}</p>
+                            <p style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 600, marginTop: "2px" }}>#CUST-{customer.id.substring(customer.id.length - 6).toUpperCase()}</p>
                           </div>
                         </div>
                       </td>
@@ -558,7 +550,7 @@ const Customers: React.FC = () => {
           </div>
         )
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "120px 0", backgroundColor: "white", borderRadius: "40px", textAlign: "center", border: `2px dashed ${colors.border}` }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "120px 0", backgroundColor: colors.card, borderRadius: "40px", textAlign: "center", border: `2px dashed ${colors.border}` }}>
           <div style={{ width: "100px", height: "100px", backgroundColor: colors.bg, borderRadius: "40px", display: "flex", alignItems: "center", justifyContent: "center", color: colors.textMuted, marginBottom: "32px", transform: "rotate(-10deg)" }}>
             <Search size={50} strokeWidth={1.5} />
           </div>
@@ -576,7 +568,7 @@ const Customers: React.FC = () => {
       {/* Pagination */}
       {filteredCustomers.length > 0 && (
         <div style={styles.pagination}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", backgroundColor: "white", padding: "12px 24px", borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: shadows.soft }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", backgroundColor: colors.card, padding: "12px 24px", borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: shadows.soft }}>
             <p style={{ fontSize: "14px", fontWeight: 800, color: colors.textMuted, margin: 0 }}>
               Segment <span style={{ color: colors.primary, fontWeight: 900 }}>{currentPage}</span> / {totalPages}
             </p>
@@ -617,8 +609,8 @@ const Customers: React.FC = () => {
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <h2 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>Register Client</h2>
-                <p style={{ fontSize: "14px", color: colors.textMuted, margin: "4px 0 0 0", fontWeight: 500 }}>Enter the new entity details below.</p>
+                <h2 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0, letterSpacing: "-0.03em" }}>Register New Client</h2>
+                <p style={{ fontSize: "14px", color: colors.textMuted, margin: "4px 0 0 0", fontWeight: 500 }}>Global synchronization with identity nodes enabled.</p>
               </div>
               <button 
                 onClick={() => setIsAddModalOpen(false)}
@@ -632,69 +624,73 @@ const Customers: React.FC = () => {
               <form style={{ display: "flex", flexDirection: "column", gap: "24px" }} onSubmit={handleAddCustomer}>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Client Name</label>
-                    <div style={{ position: "relative" }}>
-                      <Users size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="John Doe / Acme Corp"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        required
-                      />
-                    </div>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Client Name</label>
+                    <Input 
+                      leftIcon={<Users size={18} />}
+                      placeholder="John Doe / Acme Corp"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                    />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Email Address</label>
-                    <div style={{ position: "relative" }}>
-                      <Mail size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        type="email"
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="john@example.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        required
-                      />
-                    </div>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Email Address</label>
+                    <Input 
+                      type="email"
+                      leftIcon={<Mail size={18} />}
+                      placeholder="john@example.com"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      required
+                    />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Phone Number</label>
-                    <div style={{ position: "relative" }}>
-                      <Phone size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="+1 234 567 890"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      />
-                    </div>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Phone Number</label>
+                    <Input 
+                      leftIcon={<Phone size={18} />}
+                      placeholder="+1 234 567 890"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Location</label>
-                    <div style={{ position: "relative" }}>
-                      <MapPin size={18} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} />
-                      <input 
-                        style={{ width: "100%", padding: "12px 12px 12px 42px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px" }}
-                        placeholder="New York, USA"
-                        value={formData.location}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      />
-                    </div>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Location</label>
+                    <Input 
+                      leftIcon={<MapPin size={18} />}
+                      placeholder="New York, USA"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Revenue (Price)</label>
+                    <Input 
+                      type="number"
+                      leftIcon={<TrendingUp size={18} />}
+                      placeholder="0.00"
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 700, color: colors.textMain }}>Client Status</label>
+                  <label style={{ fontSize: "12px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Client Status</label>
                   <Select 
                     value={formData.status}
                     onChange={(val) => setFormData({...formData, status: val as string})}
                     options={[
-                      { label: "Active", value: "Active" },
-                      { label: "Pending", value: "Pending" },
-                      { label: "Inactive", value: "Inactive" },
+                      { label: "Active Nodes", value: "Active" },
+                      { label: "Pending Verification", value: "Pending" },
+                      { label: "Inactive HUB", value: "Inactive" },
                     ]}
-                    style={{ borderRadius: "12px" }}
+                    style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
                   />
                 </div>
               </form>
@@ -703,15 +699,30 @@ const Customers: React.FC = () => {
             <div style={{ padding: "24px 32px", backgroundColor: colors.bg, borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "flex-end", gap: "12px" }}>
               <button 
                 onClick={() => setIsAddModalOpen(false)}
-                style={{ padding: "10px 20px", borderRadius: "12px", border: `1px solid ${colors.border}`, backgroundColor: "white", color: colors.textMuted, fontWeight: 700, cursor: "pointer" }}
+                style={{ padding: "12px 24px", borderRadius: "14px", border: `1px solid ${colors.border}`, backgroundColor: colors.card, color: colors.textMuted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
               >
-                Cancel
+                Discard
               </button>
               <button 
                 onClick={handleAddCustomer}
-                style={{ padding: "10px 24px", borderRadius: "12px", border: "none", backgroundColor: colors.primaryDark, color: "white", fontWeight: 700, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)" }}
+                style={{ 
+                  padding: "14px 32px", 
+                  borderRadius: "16px", 
+                  border: "none", 
+                  backgroundColor: colors.primaryDark, 
+                  color: "white", 
+                  fontWeight: 800, 
+                  cursor: "pointer", 
+                  boxShadow: `0 8px 15px -3px ${colors.primaryDark}40`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "14px",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                }}
               >
-                Save Client
+                <span>Save Client</span>
+                <ArrowRight size={18} />
               </button>
             </div>
           </div>
@@ -727,7 +738,7 @@ const Customers: React.FC = () => {
                 <div style={{ ...styles.avatar, width: "48px", height: "48px", fontSize: "16px" }}>{selectedCustomer.avatar}</div>
                 <div>
                   <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{selectedCustomer.name}</h2>
-                  <p style={{ fontSize: "12px", color: colors.textMuted, margin: "2px 0 0 0", fontWeight: 600 }}>#CUST-ID-2024-0{selectedCustomer.id}</p>
+                  <p style={{ fontSize: "12px", color: colors.textMuted, margin: "2px 0 0 0", fontWeight: 600 }}>#CUST-{selectedCustomer.id.substring(selectedCustomer.id.length - 6).toUpperCase()}</p>
                 </div>
               </div>
               <button 

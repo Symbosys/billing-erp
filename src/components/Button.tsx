@@ -19,11 +19,14 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const variants = {
-    primary: "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:shadow-indigo-600/30 active:scale-[0.98]",
-    secondary: "bg-slate-50 text-slate-600 border border-slate-100 hover:bg-slate-100 active:bg-slate-200 active:scale-[0.98]",
-    danger: "bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-[0.98]",
-    outline: "bg-transparent border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 active:scale-[0.98]",
-    ghost: "bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:bg-slate-200",
+    primary:
+      "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:shadow-indigo-600/30 active:scale-[0.98]",
+    secondary: "text-slate-600 border active:scale-[0.98]",
+    danger:
+      "bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 active:scale-[0.98]",
+    outline:
+      "bg-transparent border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 active:scale-[0.98]",
+    ghost: "bg-transparent active:scale-[0.98]",
   };
 
   const sizes = {
@@ -39,6 +42,23 @@ const Button: React.FC<ButtonProps> = ({
         transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none
         ${variants[variant]} ${sizes[size]} ${className}
       `}
+      style={{
+        backgroundColor:
+          variant === "secondary"
+            ? "var(--bg-main)"
+            : variant === "ghost"
+              ? "transparent"
+              : undefined,
+        borderColor:
+          variant === "secondary" ? "var(--border-color)" : undefined,
+        color:
+          variant === "secondary"
+            ? "var(--text-main)"
+            : variant === "ghost"
+              ? "var(--text-muted)"
+              : undefined,
+        ...props.style,
+      }}
       {...props}
     >
       {isLoading ? (

@@ -6,15 +6,7 @@ import {
   Shield,
   Bell,
   CreditCard,
-  Globe,
-  Moon,
-  Sun,
   Save,
-  Key,
-  Mail,
-  Smartphone,
-  Check,
-  ChevronRight,
   Database,
   Terminal,
   Zap,
@@ -22,34 +14,76 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
-import Card from "../components/Card";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import Select from "../components/Select";
 import Badge from "../components/Badge";
+import { useTheme } from "../context/ThemeContext";
+import { useUpdatePassword } from "../config/hooks/useAuth";
 
 const Settings: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "general");
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
 
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  const handleTabChange = (id: string) => {
-    setActiveTab(id);
-    setSearchParams({ tab: id });
-  };
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, colors } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
 
-  // Form States
   const [entityType, setEntityType] = useState("corp");
   const [currency, setCurrency] = useState("usd");
   const [timezone, setTimezone] = useState("pst");
+  const [businessName, setBusinessName] = useState("SymboSys Enterprise");
+  const [headquartersAddress, setHeadquartersAddress] = useState("124 Innovation Way, Silicon Valley, CA");
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+
+  const handleSaveConfig = () => {
+    setIsSavingConfig(true);
+    setTimeout(() => {
+      setIsSavingConfig(false);
+      alert("System configurations synchronized to cloud successfully!");
+    }, 1200);
+  };
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const updatePasswordMutation = useUpdatePassword();
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert("Please fill in all password fields");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert("New passwords do not match");
+      return;
+    }
+
+    try {
+      await updatePasswordMutation.mutateAsync({ currentPassword, newPassword });
+      alert("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Failed to update password");
+    }
+  };
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -60,15 +94,7 @@ const Settings: React.FC = () => {
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth < 1024;
 
-  const colors = {
-    primary: "#4f46e5",
-    primaryLight: "#818cf8",
-    textMain: "#0f172a",
-    textMuted: "#64748b",
-    border: "rgba(226, 232, 240, 0.7)",
-    bg: "#f8fafc",
-    emerald: "#10b981",
-  };
+
 
   const tabs = [
     { id: "general", label: "General", icon: <SettingsIcon size={18} /> },
@@ -107,7 +133,7 @@ const Settings: React.FC = () => {
       alignItems: "center",
       gap: "12px",
       padding: "8px 16px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "14px",
       border: `1px solid ${colors.border}`,
     },
@@ -128,11 +154,11 @@ const Settings: React.FC = () => {
       width: "100%",
     }),
     sectionCard: {
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "32px",
       border: `1px solid ${colors.border}`,
       padding: isMobile ? "24px" : "40px",
-      boxShadow: "0 20px 40px -20px rgba(0,0,0,0.05)",
+      boxShadow: "var(--card-shadow)",
     },
     inputGroup: {
       display: "flex",
@@ -141,11 +167,13 @@ const Settings: React.FC = () => {
       marginBottom: "24px",
     },
     label: {
-      fontSize: "13px",
+      fontSize: "12px",
       fontWeight: 800,
-      color: colors.textMain,
+      color: colors.textMuted,
       textTransform: "uppercase" as const,
-      letterSpacing: "0.1em",
+      letterSpacing: "0.15em",
+      marginBottom: "2px",
+      marginLeft: "4px"
     },
     divider: {
       height: "1px",
@@ -169,10 +197,10 @@ const Settings: React.FC = () => {
       scrollSnapAlign: "start" as const,
       minWidth: "260px",
     },
-    statCard: (color: string) => ({
+    statCard: (_color: string) => ({
       padding: isMobile ? "20px" : "24px",
       borderRadius: "24px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
       display: "flex",
       flexDirection: "column" as const,
@@ -230,8 +258,15 @@ const Settings: React.FC = () => {
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Business Name</label>
                 <Input
-                  defaultValue="SymboSys Enterprise"
-                  style={{ borderRadius: "14px" }}
+                  value={businessName}
+                  onChange={(e: any) => setBusinessName(e.target.value)}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
               <div style={styles.inputGroup}>
@@ -243,7 +278,13 @@ const Settings: React.FC = () => {
                   ]}
                   value={entityType}
                   onChange={(val) => setEntityType(val as string)}
-                  style={{ borderRadius: "14px" }}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
             </div>
@@ -251,8 +292,15 @@ const Settings: React.FC = () => {
             <div style={styles.inputGroup}>
               <label style={styles.label}>Headquarters Address</label>
               <Input
-                defaultValue="124 Innovation Way, Silicon Valley, CA"
-                style={{ borderRadius: "14px" }}
+                value={headquartersAddress}
+                onChange={(e: any) => setHeadquartersAddress(e.target.value)}
+                style={{ 
+                  borderRadius: "18px", 
+                  height: "54px", 
+                  fontSize: "15px",
+                  backgroundColor: colors.input,
+                  border: `2px solid ${colors.border}`
+                }}
               />
             </div>
 
@@ -296,7 +344,13 @@ const Settings: React.FC = () => {
                   ]}
                   value={currency}
                   onChange={(val) => setCurrency(val as string)}
-                  style={{ borderRadius: "14px" }}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
               <div style={styles.inputGroup}>
@@ -308,7 +362,13 @@ const Settings: React.FC = () => {
                   ]}
                   value={timezone}
                   onChange={(val) => setTimezone(val as string)}
-                  style={{ borderRadius: "14px" }}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
             </div>
@@ -322,15 +382,20 @@ const Settings: React.FC = () => {
             >
               <Button
                 variant="primary"
-                leftIcon={<Save size={20} />}
+                leftIcon={isSavingConfig ? <RefreshCw size={20} className="animate-spin" /> : <Save size={20} />}
+                onClick={handleSaveConfig}
+                disabled={isSavingConfig}
                 style={{
                   borderRadius: "16px",
                   padding: "16px 32px",
                   backgroundColor: colors.primary,
                   fontWeight: 800,
+                  opacity: isSavingConfig ? 0.7 : 1,
+                  pointerEvents: isSavingConfig ? "none" : "auto",
+                  transition: "all 0.3s ease"
                 }}
               >
-                Save Configurations
+                {isSavingConfig ? "Synchronizing..." : "Save Configurations"}
               </Button>
             </div>
           </div>
@@ -418,7 +483,16 @@ const Settings: React.FC = () => {
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
-                  style={{ borderRadius: "14px", paddingRight: "50px" }}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px",
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`,
+                    paddingRight: "50px"
+                  }}
                 />
                 <button
                   onClick={() => setShowPassword(!showPassword)}
@@ -450,7 +524,15 @@ const Settings: React.FC = () => {
                 <Input
                   type="password"
                   placeholder="New secure password"
-                  style={{ borderRadius: "14px" }}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
               <div style={styles.inputGroup}>
@@ -458,7 +540,15 @@ const Settings: React.FC = () => {
                 <Input
                   type="password"
                   placeholder="Repeat new password"
-                  style={{ borderRadius: "14px" }}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{ 
+                    borderRadius: "18px", 
+                    height: "54px", 
+                    fontSize: "15px", 
+                    backgroundColor: colors.input,
+                    border: `2px solid ${colors.border}`
+                  }}
                 />
               </div>
             </div>
@@ -472,14 +562,100 @@ const Settings: React.FC = () => {
             >
               <Button
                 variant="primary"
+                onClick={handleUpdatePassword}
                 style={{
                   borderRadius: "16px",
                   padding: "16px 32px",
                   backgroundColor: colors.primary,
                   fontWeight: 800,
+                  opacity: updatePasswordMutation.isPending ? 0.7 : 1,
+                  pointerEvents: updatePasswordMutation.isPending ? "none" : "auto"
                 }}
               >
-                Update Credentials
+                {updatePasswordMutation.isPending ? "Updating..." : "Update Credentials"}
+              </Button>
+            </div>
+          </div>
+        );
+      case "account":
+        return (
+          <div style={styles.sectionCard}>
+            <div style={{ marginBottom: "32px" }}>
+              <h3
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 900,
+                  color: colors.textMain,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Account Management
+              </h3>
+              <p
+                style={{
+                  color: colors.textMuted,
+                  fontWeight: 500,
+                  marginTop: "4px",
+                }}
+              >
+                Manage your active session and account status.
+              </p>
+            </div>
+
+            <div
+              style={{
+                padding: "24px",
+                backgroundColor: "rgba(244, 63, 94, 0.03)",
+                borderRadius: "20px",
+                border: `1px solid rgba(244, 63, 94, 0.1)`,
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+                marginBottom: "32px",
+              }}
+            >
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "14px",
+                  backgroundColor: "#f43f5e",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <LogOut size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h5
+                  style={{ fontWeight: 800, color: colors.textMain, margin: 0 }}
+                >
+                  Terminate Session
+                </h5>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: colors.textMuted,
+                    margin: "2px 0 0 0",
+                    fontWeight: 500,
+                  }}
+                >
+                  Securely sign out of the administrative dashboard. You will need your credentials to log back in.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                onClick={handleLogout}
+                style={{ 
+                  backgroundColor: "#f43f5e", 
+                  fontWeight: 800,
+                  borderRadius: "14px",
+                  padding: "12px 24px"
+                }}
+              >
+                Sign Out Securely
               </Button>
             </div>
           </div>
@@ -556,69 +732,7 @@ const Settings: React.FC = () => {
             Orchestrate your workspace environment and security infrastructure.
           </p>
         </div>
-        {!isMobile && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "8px 20px",
-              backgroundColor: "white",
-              borderRadius: "18px",
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            <Badge variant="success" dot style={{ fontWeight: 800 }}>
-              Server: Online
-            </Badge>
-            <div
-              style={{
-                width: "1px",
-                height: "20px",
-                backgroundColor: colors.border,
-              }}
-            />
-            <span
-              style={{
-                fontSize: "12px",
-                fontWeight: 800,
-                color: colors.textMuted,
-              }}
-            >
-              Latency: 14ms
-            </span>
-            <div style={{ width: "1px", height: "20px", backgroundColor: colors.border, margin: "0 8px" }} />
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              {isDarkMode ? <Moon size={16} color={colors.textMuted} /> : <Sun size={16} color={colors.textMuted} />}
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                style={{
-                  width: "36px",
-                  height: "18px",
-                  borderRadius: "9px",
-                  backgroundColor: isDarkMode ? colors.emerald : "#e2e8f0",
-                  border: "none",
-                  position: "relative",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                }}
-              >
-                <div
-                  style={{
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "50%",
-                    backgroundColor: "white",
-                    position: "absolute",
-                    top: "3px",
-                    left: isDarkMode ? "21px" : "3px",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  }}
-                />
-              </button>
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* System Health Slider */}
@@ -628,28 +742,28 @@ const Settings: React.FC = () => {
             label: "Cloud Sync",
             value: "Real-time",
             icon: <RefreshCw size={22} />,
-            color: colors.emerald,
+            color: "#10b981",
             change: "Active",
           },
           {
             label: "Server Latency",
             value: "14ms",
             icon: <Zap size={22} />,
-            color: colors.primary,
+            color: "#4f46e5",
             change: "Optimal",
           },
           {
             label: "Security Level",
             value: "Tier 4",
             icon: <Shield size={22} />,
-            color: colors.primaryLight,
+            color: "#818cf8",
             change: "Encrypted",
           },
           {
             label: "Storage Load",
             value: "42.8%",
             icon: <Database size={22} />,
-            color: colors.textMuted,
+            color: theme === "dark" ? "#94a3b8" : "#64748b",
             change: "Healthy",
           },
         ].map((stat, i) => (
@@ -688,7 +802,7 @@ const Settings: React.FC = () => {
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
-                    color: colors.textMuted,
+                    color: theme === "dark" ? "#94a3b8" : "#64748b",
                     margin: "0 0 4px 0",
                   }}
                 >
@@ -698,7 +812,7 @@ const Settings: React.FC = () => {
                   style={{
                     fontSize: "24px",
                     fontWeight: 800,
-                    color: colors.textMain,
+                    color: theme === "dark" ? "#f8fafc" : "#1e293b",
                     margin: 0,
                   }}
                 >
@@ -721,9 +835,9 @@ const Settings: React.FC = () => {
             style={{
               marginTop: "32px",
               padding: "24px 32px",
-              backgroundColor: "white",
+              backgroundColor: theme === "dark" ? "#1e293b" : "#ffffff",
               borderRadius: "28px",
-              border: `1px solid ${colors.border}`,
+              border: `1px solid ${theme === "dark" ? "#334155" : "#e2e8f0"}`,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -735,11 +849,11 @@ const Settings: React.FC = () => {
                   width: "32px",
                   height: "32px",
                   borderRadius: "50%",
-                  backgroundColor: `${colors.emerald}15`,
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: colors.emerald,
+                  color: "#10b981",
                 }}
               >
                 <Zap size={16} />

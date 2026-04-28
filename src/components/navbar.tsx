@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Search, Menu, Bell, Settings, Globe, ChevronDown, Zap } from "lucide-react";
+import { Search, Menu, Globe, ChevronDown, Moon, Sun } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -9,6 +10,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const { theme, toggleTheme, colors } = useTheme();
 
   React.useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -16,25 +18,20 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    border: "#e2e8f0",
-    bg: "#f1f5f9",
-    white: "#ffffff",
+  const navbarColors = {
+    ...colors,
+    headerBg: theme === "light" ? "rgba(255, 255, 255, 0.8)" : "rgba(15, 23, 42, 0.8)",
+    white: theme === "light" ? "#ffffff" : "#1e293b",
     emerald: "#10b981",
-    rose: "#f43f5e",
   };
 
   const styles = {
     header: {
       height: "80px",
-      backgroundColor: "rgba(255, 255, 255, 0.8)",
+      backgroundColor: navbarColors.headerBg,
       backdropFilter: "blur(20px)",
       WebkitBackdropFilter: "blur(20px)",
-      borderBottom: `1px solid ${colors.border}`,
+      borderBottom: `1px solid ${navbarColors.border}`,
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -61,21 +58,21 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     },
     searchInput: {
       width: "100%",
-      backgroundColor: isSearchFocused ? colors.white : "rgba(241, 245, 249, 0.6)",
-      border: `1px solid ${isSearchFocused ? colors.primary : isSearchHovered ? "#cbd5e1" : "transparent"}`,
+      backgroundColor: isSearchFocused ? navbarColors.white : theme === "light" ? "rgba(241, 245, 249, 0.6)" : "rgba(255, 255, 255, 0.05)",
+      border: `1px solid ${isSearchFocused ? navbarColors.primary : isSearchHovered ? (theme === "light" ? "#cbd5e1" : "rgba(255,255,255,0.2)") : "transparent"}`,
       borderRadius: "16px",
       padding: "12px 16px 12px 48px",
       fontSize: "14px",
       fontWeight: 600,
-      color: colors.textMain,
+      color: navbarColors.textMain,
       outline: "none",
       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      boxShadow: isSearchFocused ? `0 0 0 4px ${colors.primary}10` : "none",
+      boxShadow: isSearchFocused ? `0 0 0 4px ${navbarColors.primary}10` : "none",
     },
     searchIcon: {
       position: "absolute" as const,
       left: "16px",
-      color: isSearchFocused ? colors.primary : colors.textMuted,
+      color: isSearchFocused ? navbarColors.primary : navbarColors.textMuted,
       transition: "all 0.3s ease",
       transform: isSearchFocused ? "scale(1.1)" : "scale(1)",
       pointerEvents: "none" as const,
@@ -87,12 +84,12 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       alignItems: "center",
       gap: "4px",
       padding: "4px 8px",
-      backgroundColor: colors.white,
-      border: `1px solid ${colors.border}`,
+      backgroundColor: navbarColors.white,
+      border: `1px solid ${navbarColors.border}`,
       borderRadius: "8px",
       fontSize: "10px",
       fontWeight: 800,
-      color: colors.textMuted,
+      color: navbarColors.textMuted,
       boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
       pointerEvents: "none" as const,
     },
@@ -106,7 +103,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       alignItems: "center",
       gap: "12px",
       padding: "8px 16px",
-      backgroundColor: colors.bg,
+      backgroundColor: navbarColors.bg,
       borderRadius: "12px",
       border: `1px solid rgba(226, 232, 240, 0.5)`,
     },
@@ -129,7 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           onClick={onMenuClick}
           style={{
             padding: "10px",
-            color: colors.textMuted,
+            color: navbarColors.textMuted,
             backgroundColor: "transparent",
             border: "none",
             borderRadius: "12px",
@@ -140,12 +137,12 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(99, 102, 241, 0.08)";
-            e.currentTarget.style.color = colors.primary;
+            e.currentTarget.style.backgroundColor = theme === "light" ? "rgba(99, 102, 241, 0.08)" : "rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.color = navbarColors.primary;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = colors.textMuted;
+            e.currentTarget.style.color = navbarColors.textMuted;
           }}
         >
           <Menu size={24} />
@@ -180,30 +177,62 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <div style={styles.statusBadge}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ position: "relative", width: "8px", height: "8px" }}>
-              <div style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: colors.emerald, borderRadius: "50%" }}></div>
-              <div className="ping-animation" style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: colors.emerald, borderRadius: "50%", opacity: 0.6 }}></div>
+              <div style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: navbarColors.emerald, borderRadius: "50%" }}></div>
+              <div className="ping-animation" style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: navbarColors.emerald, borderRadius: "50%", opacity: 0.6 }}></div>
             </div>
-            <span style={{ fontSize: "10px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Live Sync</span>
+            <span style={{ fontSize: "10px", fontWeight: 800, color: navbarColors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Live Sync</span>
           </div>
-          <div style={{ width: "1px", height: "12px", backgroundColor: colors.border }}></div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colors.primary }}>
+          <div style={{ width: "1px", height: "12px", backgroundColor: navbarColors.border }}></div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: navbarColors.primary }}>
             <Globe size={12} className="spin-animation" />
             <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase" }}>Global</span>
           </div>
         </div>
 
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            padding: "10px",
+            color: navbarColors.textMuted,
+            backgroundColor: navbarColors.white,
+            border: `1px solid ${navbarColors.border}`,
+            borderRadius: "12px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = navbarColors.bg;
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = navbarColors.white;
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          {theme === "light" ? (
+            <Moon size={20} fill={navbarColors.textMuted} fillOpacity={0.1} className="theme-icon" />
+          ) : (
+            <Sun size={20} fill={navbarColors.textMuted} fillOpacity={0.1} className="theme-icon" />
+          )}
+        </button>
+
         {/* Profile */}
         <div style={styles.profileWrapper} className="profile-group">
           <div style={{ textAlign: "right", display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "13px", fontWeight: 800, color: colors.textMain }}>Alexander W.</span>
-            <span style={{ fontSize: "10px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", opacity: 0.8 }}>Master Admin</span>
+            <span style={{ fontSize: "13px", fontWeight: 800, color: navbarColors.textMain }}>Alexander W.</span>
+            <span style={{ fontSize: "10px", fontWeight: 700, color: navbarColors.textMuted, textTransform: "uppercase", opacity: 0.8 }}>Master Admin</span>
           </div>
           <div style={{ 
             width: "44px", 
             height: "44px", 
             borderRadius: "14px", 
-            backgroundColor: colors.bg, 
-            border: `2px solid ${colors.white}`,
+            backgroundColor: navbarColors.bg, 
+            border: `2px solid ${navbarColors.white}`,
             boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
             overflow: "hidden"
           }}>
@@ -233,8 +262,15 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         .spin-animation {
           animation: spin 10s linear infinite;
         }
+        @keyframes rotate-in {
+          from { transform: rotate(-90deg); opacity: 0; }
+          to { transform: rotate(0deg); opacity: 1; }
+        }
+        .theme-icon {
+          animation: rotate-in 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .profile-group:hover {
-           background-color: rgba(99, 102, 241, 0.05);
+           background-color: ${theme === "light" ? "rgba(99, 102, 241, 0.05)" : "rgba(255, 255, 255, 0.03)"};
         }
       `}</style>
     </header>

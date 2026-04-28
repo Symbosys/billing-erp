@@ -15,11 +15,11 @@ const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const variants = {
-    success: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    warning: "bg-amber-50 text-amber-600 border-amber-100",
-    danger: "bg-rose-50 text-rose-600 border-rose-100",
-    info: "bg-indigo-50 text-indigo-600 border-indigo-100",
-    neutral: "bg-slate-50 text-slate-500 border-slate-100",
+    success: { backgroundColor: "var(--badge-success-bg)", color: "var(--badge-success-text)", borderColor: "var(--badge-success-text)33" },
+    warning: { backgroundColor: "var(--badge-warning-bg)", color: "var(--badge-warning-text)", borderColor: "var(--badge-warning-text)33" },
+    danger: { backgroundColor: "var(--badge-danger-bg)", color: "var(--badge-danger-text)", borderColor: "var(--badge-danger-text)33" },
+    info: { backgroundColor: "var(--badge-info-bg)", color: "var(--badge-info-text)", borderColor: "var(--badge-info-text)33" },
+    neutral: { backgroundColor: "var(--badge-neutral-bg)", color: "var(--badge-neutral-text)", borderColor: "var(--badge-neutral-text)33" },
   };
 
   const dotColors = {
@@ -36,9 +36,9 @@ const Badge: React.FC<BadgeProps> = ({
         inline-flex items-center gap-2 px-4 py-1.5 rounded-full border
         text-[10px] font-black uppercase tracking-[0.1em]
         transition-all duration-300
-        ${variants[variant]} ${className}
+        ${className}
       `}
-      style={style}
+      style={{ ...variants[variant], ...style }}
       {...props}
     >
       {dot && (

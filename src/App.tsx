@@ -38,6 +38,14 @@ const AppLayout = ({
   </div>
 );
 
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
+
 function App() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -51,41 +59,51 @@ function App() {
         <Route
           path="/"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Dashboard />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/inventory"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Inventory />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Inventory />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/customers"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Customers />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Customers />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/products"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Products />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Products />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/screen"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <POSScreen />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <POSScreen />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
 
@@ -93,25 +111,31 @@ function App() {
         <Route
           path="/billing"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Billing />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Billing />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/reports"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Analytics />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Analytics />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/settings"
           element={
-            <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
-              <Settings />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+                <Settings />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
 

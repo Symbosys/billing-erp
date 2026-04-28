@@ -1,27 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { 
-  TrendingUp, 
   BarChart3, 
   PieChart, 
   Target, 
-  Zap, 
   Users, 
   Activity, 
   ArrowUpRight, 
   ArrowDownRight, 
-  Calendar,
   Globe,
-  Layers,
   MousePointer2,
   Download,
-  Filter,
   RefreshCw
 } from "lucide-react";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import Badge from "../components/Badge";
+import { useTheme } from "../context/ThemeContext";
+import { useAnalytics } from "../config/hooks/useAnalytics";
 
-const Analytics: React.FC = () => {
+const Analytics: React.FC = () => { 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -33,29 +30,21 @@ const Analytics: React.FC = () => {
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth < 1024;
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-    info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#f8fafc",
-    card: "#ffffff",
-    border: "#e2e8f0",
-    violet: "#8b5cf6",
-  };
+  const { theme, colors } = useTheme();
 
-  const performanceMetrics = [
-    { label: "Customer Acquisition", value: "2,840", change: "+14.2%", isPositive: true, icon: <Users size={20} /> },
-    { label: "Conversion Rate", value: "3.24%", change: "+0.8%", isPositive: true, icon: <MousePointer2 size={20} /> },
-    { label: "Retention Score", value: "94.2%", change: "-1.5%", isPositive: false, icon: <Target size={20} /> },
-    { label: "Avg. Session", value: "12m 40s", change: "+24s", isPositive: true, icon: <Activity size={20} /> },
-  ];
+  const { data } = useAnalytics();
+
+  const performanceMetrics = data?.performanceMetrics.map((m, i) => ({
+    ...m,
+    icon: [<Users size={20} />, <MousePointer2 size={20} />, <Target size={20} />, <Activity size={20} />][i]
+  })) || [];
+
+  const performanceIndex = data?.performanceIndex || {
+    overall: "0%",
+    efficiency: "0%",
+    velocity: "0x",
+    chartData: ["0%", "0%", "0%", "0%", "0%", "0%", "0%", "0%", "0%", "0%"]
+  };
 
   const styles = {
     container: {
@@ -103,7 +92,7 @@ const Analytics: React.FC = () => {
       gap: "32px",
       position: "relative" as const,
       overflow: "hidden",
-      boxShadow: "0 20px 40px -10px rgba(79, 70, 229, 0.3)",
+      boxShadow: theme === "light" ? "0 20px 40px -10px rgba(79, 70, 229, 0.3)" : "none",
     },
     chartContainer: {
       height: "160px",
@@ -152,7 +141,7 @@ const Analytics: React.FC = () => {
           <Button 
             variant="secondary" 
             leftIcon={<RefreshCw size={18} />} 
-            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} 
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }} 
           />
           <Button 
             variant="primary" 
@@ -174,23 +163,23 @@ const Analytics: React.FC = () => {
       <div style={styles.heroCard}>
         <div style={{ zIndex: 1 }}>
           <p style={{ fontSize: "13px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.9 }}>Performance Index</p>
-          <h2 style={{ fontSize: isMobile ? "42px" : "56px", fontWeight: 800, margin: "8px 0", letterSpacing: "-0.03em" }}>98.42%</h2>
+          <h2 style={{ fontSize: isMobile ? "42px" : "56px", fontWeight: 800, margin: "8px 0", letterSpacing: "-0.03em" }}>{performanceIndex.overall}</h2>
           <div style={{ display: "flex", gap: "24px", marginTop: "20px" }}>
             <div>
               <p style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, textTransform: "uppercase", marginBottom: "4px" }}>Efficiency</p>
-              <p style={{ fontSize: "18px", fontWeight: 800 }}>+12.4%</p>
+              <p style={{ fontSize: "18px", fontWeight: 800 }}>{performanceIndex.efficiency}</p>
             </div>
             <div style={{ width: "1px", height: "32px", backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center" }} />
             <div>
               <p style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, textTransform: "uppercase", marginBottom: "4px" }}>Velocity</p>
-              <p style={{ fontSize: "18px", fontWeight: 800 }}>8.2x</p>
+              <p style={{ fontSize: "18px", fontWeight: 800 }}>{performanceIndex.velocity}</p>
             </div>
           </div>
         </div>
         <div style={{ width: isTablet ? "100%" : "360px", position: "relative", zIndex: 1 }}>
            <div style={styles.chartContainer}>
-             {[ "40%", "70%", "50%", "90%", "60%", "100%", "80%", "40%", "60%", "90%" ].map((h, i) => (
-                <div key={i} style={styles.bar(h, 0.3 + (i * 0.07))} />
+             {performanceIndex.chartData.map((h, i) => (
+                <div key={i} style={{ ...styles.bar(h, 0.3 + (i * 0.07)), backgroundColor: "white" }} />
              ))}
            </div>
         </div>
@@ -202,9 +191,9 @@ const Analytics: React.FC = () => {
         {performanceMetrics.map((m, i) => (
           <div key={i} style={styles.performanceCardWrapper}>
             <Card 
-              style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, padding: isMobile ? "20px" : "24px", transition: "all 0.3s ease", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", height: "100%" }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 20px -5px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.05)"; }}
+              style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: isMobile ? "20px" : "24px", transition: "all 0.3s ease", boxShadow: "var(--card-shadow)", height: "100%" }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = colors.primary; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = colors.border; }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div style={{ width: "44px", height: "44px", borderRadius: "12px", backgroundColor: `${colors.primaryDark}10`, color: colors.primaryDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -224,7 +213,7 @@ const Analytics: React.FC = () => {
 
       {/* Charts Section */}
       <div style={{ display: "grid", gridTemplateColumns: isTablet ? "1fr" : "1.5fr 1fr", gap: "24px" }}>
-        <Card style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, padding: "24px" }}>
+        <Card style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
             <div>
               <h3 style={{ fontSize: "18px", fontWeight: 800, color: colors.textMain, margin: 0 }}>Revenue Trajectory</h3>
@@ -241,7 +230,7 @@ const Analytics: React.FC = () => {
           </div>
         </Card>
 
-        <Card style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, padding: "24px" }}>
+        <Card style={{ borderRadius: "24px", border: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
             <div>
               <h3 style={{ fontSize: "18px", fontWeight: 800, color: colors.textMain, margin: 0 }}>Market Allocation</h3>

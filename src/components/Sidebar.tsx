@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 import {
   LayoutDashboard,
   Package,
@@ -7,15 +8,12 @@ import {
   Receipt,
   LogOut,
   LayoutGrid,
-  ChevronLeft,
   Settings,
   PieChart,
   Bell,
   Search,
   ChevronRight,
   Zap,
-  Menu,
-  X,
   ShieldCheck,
   CreditCard,
   Monitor,
@@ -45,23 +43,19 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { theme, colors } = useTheme();
   const location = useLocation();
 
   // --- Theme Constants (Inline CSS Tokens) ---
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
+  // --- Theme Constants (Inline CSS Tokens) ---
+  const sidebarColors = {
+    ...colors,
+    primaryLight: theme === "light" ? "#e0e7ff" : "rgba(99, 102, 241, 0.2)",
     success: "#10b981",
     warning: "#f59e0b",
     danger: "#ef4444",
     info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#ffffff",
-    border: "#e2e8f0",
-    activeBg: "#1e293b",
+    activeBg: theme === "light" ? "#1e293b" : "#6366f1",
   };
 
   const transitions = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -105,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
     { id: "sec", path: "/settings?tab=security", icon: <ShieldCheck size={18} />, label: "Security" },
     { id: "not", path: "/settings?tab=notifications", icon: <Bell size={18} />, label: "Notifications" },
     { id: "bil", path: "/settings?tab=billing", icon: <CreditCard size={18} />, label: "Payments" },
-    { id: "logout", path: "/login", icon: <LogOut size={18} />, label: "Logout" },
+    { id: "logout", path: "#", icon: <LogOut size={18} />, label: "Logout" },
   ];
 
   const filteredNavigation = useMemo(() => {
@@ -121,8 +115,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
 
   const sidebarStyle: React.CSSProperties = {
     width: sidebarWidth,
-    backgroundColor: colors.bg,
-    borderRight: `1px solid ${colors.border}`,
+    backgroundColor: sidebarColors.bg,
+    borderRight: `1px solid ${sidebarColors.border}`,
     transition: transitions,
     display: "flex",
     flexDirection: "column",
@@ -147,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
   const brandIconStyle: React.CSSProperties = {
     width: "52px",
     height: "52px",
-    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryLight})`,
+    background: `linear-gradient(135deg, ${sidebarColors.primary}, ${sidebarColors.primaryLight})`,
     borderRadius: "18px",
     display: "flex",
     alignItems: "center",
@@ -184,10 +178,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
               flexDirection: "column", 
               whiteSpace: "nowrap"
             }}>
-              <span style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, letterSpacing: "-1px" }}>
-                Symbo<span style={{ color: colors.primary }}>Sys</span>
+              <span style={{ fontSize: "24px", fontWeight: 900, color: sidebarColors.textMain, letterSpacing: "-1px" }}>
+                Symbo<span style={{ color: sidebarColors.primary }}>Sys</span>
               </span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.2em", marginTop: "2px" }}>
+              <span style={{ fontSize: "10px", fontWeight: 700, color: sidebarColors.textMuted, textTransform: "uppercase", letterSpacing: "0.2em", marginTop: "2px" }}>
                 Enterprise ERP
               </span>
             </div>
@@ -197,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
         {/* Search Bar */}
         <div style={{ padding: "0 24px", marginBottom: "32px" }}>
             <div style={{ position: "relative" }}>
-              <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={16} />
+              <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: sidebarColors.textMuted }} size={16} />
               <input 
                 type="text"
                 placeholder="Find Module..."
@@ -207,8 +201,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                   width: "100%",
                   padding: "14px 16px 14px 44px",
                   borderRadius: "16px",
-                  border: `1px solid ${colors.border}`,
-                  backgroundColor: "rgba(241, 245, 249, 0.5)",
+                  border: `1px solid ${sidebarColors.border}`,
+                  backgroundColor: theme === "light" ? "rgba(241, 245, 249, 0.5)" : "rgba(255, 255, 255, 0.03)",
                   fontSize: "13px",
                   fontWeight: 600,
                   outline: "none",
@@ -226,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
               <p style={{ 
                 fontSize: "11px", 
                 fontWeight: 800, 
-                color: colors.textMuted, 
+                color: sidebarColors.textMuted, 
                 textTransform: "uppercase", 
                 letterSpacing: "0.12em",
                 padding: "0 18px",
@@ -257,17 +251,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                           padding: "12px 18px",
                           borderRadius: "14px",
                           textDecoration: "none",
-                          color: isActive ? "white" : colors.textMain,
-                          backgroundColor: isActive ? colors.activeBg : "transparent",
+                          color: isActive ? "white" : sidebarColors.textMain,
+                          backgroundColor: isActive ? sidebarColors.activeBg : "transparent",
                           transition: "all 0.2s ease",
                           justifyContent: "flex-start",
                           position: "relative",
-                          boxShadow: isActive ? "0 8px 15px -5px rgba(15, 23, 42, 0.25)" : "none",
+                          boxShadow: isActive ? (theme === "light" ? "0 8px 15px -5px rgba(15, 23, 42, 0.25)" : "0 8px 15px -5px rgba(0, 0, 0, 0.5)") : "none",
                         }}
                         className="group"
                       >
                         <div style={{ 
-                          color: isActive ? "white" : colors.textMuted,
+                          color: isActive ? "white" : sidebarColors.textMuted,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -285,7 +279,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                               marginLeft: "auto", 
                               transition: "transform 0.3s ease",
                               transform: isSettingsOpen ? "rotate(90deg)" : "none",
-                              color: isActive ? "white" : colors.textMuted
+                              color: isActive ? "white" : sidebarColors.textMuted
                             }} 
                           />
                         )}
@@ -294,8 +288,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                             marginLeft: "auto",
                             padding: "4px 8px",
                             borderRadius: "8px",
-                            backgroundColor: isActive ? "rgba(255,255,255,0.15)" : `${colors.primary}15`,
-                            color: isActive ? "white" : colors.primary,
+                            backgroundColor: isActive ? "rgba(255,255,255,0.15)" : `${sidebarColors.primary}15`,
+                            color: isActive ? "white" : sidebarColors.primary,
                             fontSize: "10px",
                             fontWeight: 800,
                             textTransform: "uppercase"
@@ -318,7 +312,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                             <NavLink
                               key={subItem.id}
                               to={subItem.path}
-                              onClick={() => window.innerWidth < 1024 && setIsMobileOpen(false)}
+                              onClick={(e) => {
+                                if (subItem.id === "logout") {
+                                  e.preventDefault();
+                                  localStorage.removeItem("token");
+                                  localStorage.removeItem("user");
+                                  window.location.href = "/login";
+                                } else {
+                                  if (window.innerWidth < 1024) setIsMobileOpen(false);
+                                }
+                              }}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -326,16 +329,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                                 padding: "10px 16px",
                                 borderRadius: "12px",
                                 textDecoration: "none",
-                                color: colors.textMuted,
+                                color: sidebarColors.textMuted,
                                 transition: "all 0.2s ease",
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = colors.bg;
-                                e.currentTarget.style.color = colors.textMain;
+                                e.currentTarget.style.backgroundColor = sidebarColors.bg;
+                                e.currentTarget.style.color = sidebarColors.textMain;
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = colors.textMuted;
+                                e.currentTarget.style.color = sidebarColors.textMuted;
                               }}
                             >
                               <div style={{ opacity: 0.7 }}>{subItem.icon}</div>
@@ -353,14 +356,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
         </div>
 
         {/* Footer Info */}
-        <div style={{ padding: "24px", borderTop: `1px solid ${colors.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: colors.bg, borderRadius: "16px", border: `1px solid ${colors.border}` }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${colors.border}` }}>
-              <ShieldCheck size={18} style={{ color: colors.primary }} />
+        <div style={{ padding: "24px", borderTop: `1px solid ${sidebarColors.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: sidebarColors.bg, borderRadius: "16px", border: `1px solid ${sidebarColors.border}` }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: sidebarColors.bg, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${sidebarColors.border}` }}>
+              <ShieldCheck size={18} style={{ color: sidebarColors.primary }} />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain, margin: 0 }}>V.2.0.4 PRO</p>
-              <p style={{ fontSize: "10px", fontWeight: 600, color: colors.textMuted, margin: 0 }}>Sync Online</p>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: sidebarColors.textMain, margin: 0 }}>V.2.0.4 PRO</p>
+              <p style={{ fontSize: "10px", fontWeight: 600, color: sidebarColors.textMuted, margin: 0 }}>Sync Online</p>
             </div>
           </div>
         </div>

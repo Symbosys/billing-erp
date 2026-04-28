@@ -12,6 +12,7 @@ import {
   Globe,
   Loader2
 } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -21,6 +22,13 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -33,22 +41,30 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate auth latency
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+      
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      
       setIsLoading(false);
       navigate("/");
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      alert(err.message);
+    }
   };
 
-  const colors = {
-    primary: "#4f46e5",
-    primaryLight: "#818cf8",
-    violet: "#8b5cf6",
-    textMain: "#0f172a",
-    textMuted: "#64748b",
-    border: "rgba(226, 232, 240, 0.5)",
-    glass: "rgba(255, 255, 255, 0.8)",
-  };
+  const { theme, colors } = useTheme();
 
   const styles = {
     page: {
@@ -56,7 +72,9 @@ const Login: React.FC = () => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: `radial-gradient(circle at top left, #f1f5f9 0%, #e2e8f0 100%)`,
+      background: theme === "light" 
+        ? "radial-gradient(circle at top left, #f1f5f9 0%, #e2e8f0 100%)"
+        : "radial-gradient(circle at top left, #0f172a 0%, #020617 100%)",
       padding: "24px",
       position: "relative" as const,
       overflow: "hidden",
@@ -75,11 +93,11 @@ const Login: React.FC = () => {
     loginCard: {
       width: "100%",
       maxWidth: "500px",
-      backgroundColor: colors.glass,
+      backgroundColor: theme === "light" ? "rgba(255, 255, 255, 0.8)" : "rgba(15, 23, 42, 0.8)",
       backdropFilter: "blur(24px)",
       borderRadius: "40px",
-      border: "1px solid white",
-      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.08)",
+      border: `1px solid ${theme === "light" ? "rgba(255, 255, 255, 1)" : "rgba(255, 255, 255, 0.1)"}`,
+      boxShadow: "var(--card-shadow)",
       padding: isMobile ? "32px" : "56px",
       zIndex: 1,
       animation: "slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -138,8 +156,8 @@ const Login: React.FC = () => {
     },
     input: {
       width: "100%",
-      backgroundColor: "white",
-      border: `2px solid #f1f5f9`,
+      backgroundColor: colors.card,
+      border: `2px solid ${colors.border}`,
       borderRadius: "18px",
       padding: "16px 16px 16px 56px",
       fontSize: "15px",
@@ -162,15 +180,15 @@ const Login: React.FC = () => {
       gridTemplateColumns: "1fr 1fr",
       gap: "8px",
       padding: "6px",
-      backgroundColor: "#f1f5f9",
+      backgroundColor: theme === "light" ? "#f1f5f9" : "rgba(255,255,255,0.05)",
       borderRadius: "18px",
-      border: "1px solid #e2e8f0",
+      border: `1px solid ${colors.border}`,
     },
     roleButton: (isActive: boolean) => ({
       padding: "12px",
       borderRadius: "14px",
       border: "none",
-      backgroundColor: isActive ? "white" : "transparent",
+      backgroundColor: isActive ? (theme === "light" ? "white" : "rgba(255,255,255,0.1)") : "transparent",
       color: isActive ? colors.primary : colors.textMuted,
       fontSize: "11px",
       fontWeight: 900,
@@ -205,7 +223,7 @@ const Login: React.FC = () => {
       gap: "20px",
       marginTop: "40px",
       padding: "16px",
-      backgroundColor: "rgba(0,0,0,0.02)",
+      backgroundColor: theme === "light" ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)",
       borderRadius: "20px",
     }
   };

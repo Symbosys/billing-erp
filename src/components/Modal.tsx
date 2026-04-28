@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ const Modal: React.FC<ModalProps> = ({
   footer,
   size = "md"
 }) => {
+  const { theme, colors } = useTheme();
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -31,49 +34,108 @@ const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  const sizes = {
-    sm: "max-w-md",
-    md: "max-w-xl",
-    lg: "max-w-3xl",
-    xl: "max-w-5xl",
-  };
+  const maxWidth = {
+    sm: "448px",
+    md: "576px",
+    lg: "768px",
+    xl: "1024px",
+  }[size];
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+    <div 
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        animation: "fadeIn 0.3s ease",
+      }}
+    >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.8)",
+          backdropFilter: "blur(8px)",
+        }}
         onClick={onClose}
       />
       
       {/* Modal Container */}
-      <div className={`
-        relative w-full ${sizes[size]} bg-white rounded-[32px] shadow-2xl shadow-slate-900/40 
-        overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500
-      `}>
+      <div 
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: maxWidth,
+          backgroundColor: colors.card,
+          borderRadius: "32px",
+          border: `1px solid ${colors.border}`,
+          boxShadow: "var(--card-shadow)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          animation: "modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
         {/* Header */}
-        <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between">
-          <h2 className="text-2xl font-black text-[#1e293b] tracking-tight">{title}</h2>
+        <div style={{ padding: "28px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ fontSize: "24px", fontWeight: 900, color: colors.textMain, letterSpacing: "-0.02em", margin: 0 }}>{title}</h2>
           <button 
             onClick={onClose}
-            className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+            style={{
+              padding: "10px",
+              color: colors.textMuted,
+              backgroundColor: "transparent",
+              border: "none",
+              borderRadius: "12px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              display: "flex",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.bg; e.currentTarget.style.color = colors.primaryDark; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = colors.textMuted; }}
           >
             <X size={20} strokeWidth={3} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[70vh] custom-scrollbar font-medium text-slate-600">
+        <div 
+          className="custom-scrollbar"
+          style={{ 
+            padding: "32px", 
+            overflowY: "auto", 
+            maxHeight: "70vh", 
+            fontWeight: 500, 
+            color: colors.textMuted,
+            fontSize: "15px"
+          }}
+        >
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-50 flex items-center justify-end gap-3">
+          <div style={{ padding: "24px 32px", backgroundColor: theme === "light" ? "rgba(248, 250, 252, 0.5)" : "rgba(255, 255, 255, 0.02)", borderTop: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px" }}>
             {footer}
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(30px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 };

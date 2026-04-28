@@ -45,7 +45,6 @@ const Select: React.FC<SelectProps> = ({
     <div 
       className={`flex flex-col gap-2.5 w-full relative ${className}`} 
       ref={containerRef}
-      style={style}
       {...props}
     >
       {label && (
@@ -58,19 +57,28 @@ const Select: React.FC<SelectProps> = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          flex items-center justify-between w-full bg-slate-50/50 border-2 border-slate-50 rounded-2xl py-4 px-6
+          flex items-center justify-between w-full border-2 rounded-2xl py-4 px-6
           text-[15px] font-bold transition-all duration-300 shadow-sm outline-none
-          ${isOpen ? "bg-white border-indigo-500/20 ring-4 ring-indigo-500/5" : "hover:bg-slate-100/50"}
+          ${isOpen ? "border-indigo-500/20 ring-4 ring-indigo-500/5" : ""}
           ${error ? "border-rose-500/50" : ""}
-          ${selectedOption ? "text-slate-700" : "text-slate-400"}
+          ${selectedOption ? "" : "text-slate-400"}
         `}
+        style={{
+          backgroundColor: isOpen ? "var(--bg-card)" : "var(--input-bg)",
+          borderColor: isOpen ? "var(--primary)" : "var(--border-color)",
+          color: selectedOption ? "var(--text-main)" : "var(--text-muted)",
+          ...style
+        }}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <ChevronDown size={20} className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-600" : "text-slate-400"}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-900/10 py-3 z-[1500] animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="absolute top-[calc(100%+8px)] left-0 w-full border rounded-2xl shadow-2xl py-3 z-[1500] animate-in fade-in zoom-in-95 duration-200"
+          style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)", boxShadow: "var(--card-shadow)" }}
+        >
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {options.map((option) => (
               <button
@@ -82,8 +90,12 @@ const Select: React.FC<SelectProps> = ({
                 }}
                 className={`
                   w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold transition-all
-                  ${option.value === value ? "text-indigo-600 bg-indigo-50" : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600"}
+                  ${option.value === value ? "text-indigo-600" : ""}
                 `}
+                style={{
+                  backgroundColor: option.value === value ? "var(--primary-glow)" : "transparent",
+                  color: option.value === value ? "var(--primary)" : "var(--text-main)",
+                }}
               >
                 {option.label}
                 {option.value === value && <Check size={18} strokeWidth={3} />}

@@ -1,28 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Layers,
   Bell,
   Activity,
   Zap,
   Target,
-  BarChart3,
   MousePointer2,
-  X,
-  ChevronRight,
-  TrendingUp,
   Users,
-  Package,
   DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
-  Calendar,
-  Clock,
   ArrowRight,
   Plus
 } from "lucide-react";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
+import { useTheme } from "../context/ThemeContext";
+import { useDashboard } from "../config/hooks/useDashboard";
 
 const Dashboard: React.FC = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -37,35 +30,17 @@ const Dashboard: React.FC = () => {
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth < 1024;
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-    info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#f8fafc",
-    card: "#ffffff",
-    border: "#e2e8f0",
-  };
+  const { theme, colors } = useTheme();
+  
+  const { data } = useDashboard();
 
-  const stats = [
-    { title: "Net Revenue", value: "$428.5k", change: "+14.2%", icon: <DollarSign size={22} />, color: colors.primaryDark, isPositive: true, detail: "vs. last month" },
-    { title: "Active Users", value: "2,480", change: "+8.1%", icon: <Users size={22} />, color: colors.success, isPositive: true, detail: "connected now" },
-    { title: "System Load", value: "84.2%", change: "-2.4%", icon: <Zap size={22} />, color: colors.danger, isPositive: false, detail: "resource usage" },
-    { title: "Daily Target", value: "92%", change: "+5.5%", icon: <Target size={22} />, color: colors.warning, isPositive: true, detail: "completion rate" },
-  ];
+  const stats = data?.stats.map((stat, i) => ({
+    ...stat,
+    icon: [<DollarSign size={22} />, <Users size={22} />, <Zap size={22} />, <Target size={22} />][i],
+    color: [colors.primary, colors.success, colors.danger, colors.warning][i]
+  })) || [];
 
-  const recentTransactions = [
-    { id: 1, customer: "Alexander Wright", amount: "$1,200.00", date: "Just now", status: "Completed", type: "Enterprise" },
-    { id: 2, customer: "Sophia Chen", amount: "$3,450.50", date: "12 mins ago", status: "Completed", type: "Standard" },
-    { id: 3, customer: "Marcus Miller", amount: "$890.00", date: "1 hour ago", status: "Processing", type: "Legacy" },
-    { id: 4, customer: "Elena Rodriguez", amount: "$2,100.00", date: "3 hours ago", status: "Completed", type: "Enterprise" },
-  ];
+  const recentTransactions = data?.recentTransactions || [];
 
   const styles = {
     container: {
@@ -110,24 +85,24 @@ const Dashboard: React.FC = () => {
       scrollSnapAlign: "start" as const,
       minWidth: "260px"
     },
-    statCard: (color: string) => ({
+    statCard: {
       padding: isMobile ? "20px" : "24px",
       borderRadius: "24px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       display: "flex",
       flexDirection: "column" as const,
       gap: "16px",
       transition: "all 0.3s ease",
       position: "relative" as const,
       overflow: "hidden",
-    }),
+    },
     iconWrapper: (color: string) => ({
       width: "48px",
       height: "48px",
       borderRadius: "14px",
-      backgroundColor: `${color}10`,
+      backgroundColor: `${color}15`,
       color: color,
       display: "flex",
       alignItems: "center",
@@ -171,13 +146,13 @@ const Dashboard: React.FC = () => {
           <p style={{ color: colors.textMuted, fontWeight: 500, fontSize: isMobile ? "14px" : "16px", margin: 0 }}>Core intelligence monitoring and enterprise resource management.</p>
         </div>
         <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
-          <Button variant="secondary" leftIcon={<Bell size={18} />} style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} />
-          <Button variant="primary" leftIcon={<Plus size={20} />} style={{ borderRadius: "14px", padding: "12px 24px", backgroundColor: colors.primaryDark, boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", fontWeight: 600 }}>New Project</Button>
+          <Button variant="secondary" leftIcon={<Bell size={18} />} style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }} />
+          <Button variant="primary" leftIcon={<Plus size={20} />} style={{ borderRadius: "14px", padding: "12px 24px", backgroundColor: colors.primaryDark, boxShadow: theme === "light" ? "0 10px 15px -3px rgba(79, 70, 229, 0.3)" : "none", fontWeight: 600 }}>New Project</Button>
         </div>
       </div>
 
       {/* Quick Access Tabs */}
-      <div style={{ display: "flex", gap: "6px", padding: "4px", backgroundColor: "white", borderRadius: "16px", width: "fit-content", border: `1px solid ${colors.border}` }}>
+      <div style={{ display: "flex", gap: "6px", padding: "4px", backgroundColor: colors.card, borderRadius: "16px", width: "fit-content", border: `1px solid ${colors.border}` }}>
         {["Overview", "Analytics", "Operations"].map((tab) => (
           <button
             key={tab}
@@ -204,14 +179,14 @@ const Dashboard: React.FC = () => {
         {stats.map((stat, i) => (
           <div key={i} style={styles.statCardWrapper}>
             <div 
-              style={styles.statCard(stat.color)}
+              style={styles.statCard}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+                e.currentTarget.style.borderColor = colors.primary;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.05)";
+                e.currentTarget.style.borderColor = colors.border;
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>

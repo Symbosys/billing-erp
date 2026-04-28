@@ -22,15 +22,24 @@ const Card: React.FC<CardProps> = ({
 }) => {
   return (
     <div 
-      className={`bg-white border border-slate-50 rounded-[32px] shadow-xl shadow-slate-200/40 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200/60 ${className}`}
-      style={style}
+      className={`overflow-hidden transition-all duration-500 ${className}`}
+      style={{
+        backgroundColor: "var(--bg-card)",
+        border: "1px solid var(--border-color)",
+        borderRadius: "32px",
+        boxShadow: "var(--card-shadow)",
+        ...style
+      }}
       {...props}
     >
       {(title || subtitle || headerAction) && (
-        <div className="px-8 py-7 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm">
+        <div 
+          className="px-8 py-7 border-b flex items-center justify-between backdrop-blur-sm"
+          style={{ borderBottomColor: "var(--border-color)", backgroundColor: "rgba(255, 255, 255, 0.02)" }}
+        >
           <div>
-            {title && <h3 className="text-xl font-black text-[#1e293b] tracking-tight">{title}</h3>}
-            {subtitle && <p className="text-sm font-medium text-slate-400 mt-1">{subtitle}</p>}
+            {title && <h3 className="text-xl font-black tracking-tight" style={{ color: "var(--text-main)" }}>{title}</h3>}
+            {subtitle && <p className="text-sm font-medium mt-1" style={{ color: "var(--text-muted)" }}>{subtitle}</p>}
           </div>
           {headerAction && <div>{headerAction}</div>}
         </div>
@@ -41,7 +50,10 @@ const Card: React.FC<CardProps> = ({
       </div>
 
       {footer && (
-        <div className="px-8 py-6 bg-slate-50/30 border-t border-slate-50">
+        <div 
+          className="px-8 py-6 border-t"
+          style={{ borderTopColor: "var(--border-color)", backgroundColor: "rgba(255, 255, 255, 0.01)" }}
+        >
           {footer}
         </div>
       )}

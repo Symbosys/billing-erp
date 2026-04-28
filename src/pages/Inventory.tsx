@@ -1,30 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { 
-  Package, 
   Search, 
   Plus, 
-  Filter, 
   Download, 
   AlertTriangle, 
   Layers,
-  ShoppingBag,
   Box,
   Truck,
-  Edit,
   Trash2,
   RefreshCw,
-  Archive,
   Calendar,
   MapPin,
-  CheckCircle2,
-  Clock,
-  X
+  X,
+  ArrowRight
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import Input from "../components/Input";
 import Select from "../components/Select";
+import { useTheme } from "../context/ThemeContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProducts, useCreateProduct, useDeleteProduct } from "../config/hooks/useProduct";
+import { useInventoryStats } from "../config/hooks/useInventory";
 
 const Inventory: React.FC = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -49,29 +47,48 @@ const Inventory: React.FC = () => {
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth < 1024;
 
-  const colors = {
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    primaryLight: "#e0e7ff",
-    secondary: "#64748b",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
-    info: "#3b82f6",
-    textMain: "#1e293b",
-    textMuted: "#64748b",
-    bg: "#f8fafc",
-    card: "#ffffff",
-    border: "#e2e8f0",
-  };
+  const { theme, colors } = useTheme();
+  const queryClient = useQueryClient();
 
-  const inventoryItems = [
-    { id: 1, name: "Premium Wireless Headphones", sku: "WHP-001", category: "Electronics", stock: 45, price: "$299", status: "In Stock", trend: "+12%" },
-    { id: 2, name: "Ergonomic Office Chair", sku: "OFF-202", category: "Furniture", stock: 12, price: "$450", status: "Low Stock", trend: "-5%" },
-    { id: 3, name: "Mechanical Gaming Keyboard", sku: "GKB-404", category: "Electronics", stock: 89, price: "$120", status: "In Stock", trend: "+18%" },
-    { id: 4, name: "Minimalist Desk Lamp", sku: "LMP-303", category: "Decor", stock: 0, price: "$85", status: "Out of Stock", trend: "0%" },
-    { id: 5, name: "UltraWide 4K Monitor", sku: "MON-505", category: "Electronics", stock: 8, price: "$799", status: "Low Stock", trend: "+2%" },
+  const { data: products = [], isLoading: isProductsLoading } = useProducts();
+  const createProductMutation = useCreateProduct();
+  const deleteProductMutation = useDeleteProduct();
+  const { data: statsData, isLoading: isStatsLoading } = useInventoryStats();
+
+  const defaultStats = [
+    { label: "Asset Value", value: "---", trend: "---", icon: <Layers size={22} />, color: colors.primaryDark },
+    { label: "Critical Stock", value: "---", trend: "---", icon: <AlertTriangle size={22} />, color: colors.danger },
+    { label: "Inbound Flow", value: "---", trend: "---", icon: <Truck size={22} />, color: colors.info },
+    { label: "Active Nodes", value: "---", trend: "---", icon: <MapPin size={22} />, color: colors.warning }
   ];
+
+  const stats = statsData ? statsData.map((stat, i) => ({
+    ...stat,
+    icon: defaultStats[i].icon,
+    color: defaultStats[i].color
+  })) : defaultStats;
+
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === "all" || p.category.toLowerCase().includes(filterCategory.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleCreateInbound = async () => {
+    if (!inboundForm.name || !inboundForm.qty) return;
+    try {
+      await createProductMutation.mutateAsync({
+        name: inboundForm.name,
+        category: "General",
+        stock: parseInt(inboundForm.qty) || 0,
+        price: 0,
+      });
+      setIsModalOpen(false);
+      setInboundForm({ name: "", qty: "", eta: "", hub: "a" });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const inboundStock = [
     { id: "INB-882", item: "Liquid Cooling Kit", qty: 50, source: "Shenzhen Depot", eta: "Oct 24, 2024", status: "In Transit" },
@@ -120,11 +137,11 @@ const Inventory: React.FC = () => {
       display: "flex",
       gap: "4px",
       padding: "4px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "16px",
       border: `1px solid ${colors.border}`,
       width: "fit-content",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+      boxShadow: "var(--card-shadow)",
     },
     tab: (isActive: boolean) => ({
       padding: "8px 20px",
@@ -156,10 +173,10 @@ const Inventory: React.FC = () => {
       scrollSnapAlign: "start" as const,
       minWidth: "260px"
     },
-    statCard: (color: string) => ({
+    statCard: (_color: string) => ({
       padding: isMobile ? "20px" : "24px",
       borderRadius: "24px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       border: `1px solid ${colors.border}`,
       display: "flex",
       flexDirection: "column" as const,
@@ -183,10 +200,10 @@ const Inventory: React.FC = () => {
       flexDirection: isMobile ? ("column" as const) : ("row" as const),
       gap: "16px",
       padding: isMobile ? "16px" : "20px",
-      backgroundColor: "white",
+      backgroundColor: colors.card,
       borderRadius: "24px",
       border: `1px solid ${colors.border}`,
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
+      boxShadow: "var(--card-shadow)",
       position: "sticky" as const,
       top: "80px", // Aligned with Navbar height
       zIndex: 10,
@@ -206,19 +223,25 @@ const Inventory: React.FC = () => {
         <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
           <Button 
             variant="secondary" 
-            leftIcon={<RefreshCw size={18} />} 
-            style={{ borderRadius: "14px", padding: "12px", backgroundColor: "white", border: `1px solid ${colors.border}` }} 
+            leftIcon={<RefreshCw size={18} className={isProductsLoading || isStatsLoading ? "animate-spin" : ""} />} 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["inventoryStats"] });
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+            }}
+            style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }} 
           />
           <Button 
             variant="primary" 
             leftIcon={<Plus size={20} />} 
             onClick={() => setIsModalOpen(true)}
             style={{ 
-              borderRadius: "14px", 
-              padding: "12px 24px", 
+              borderRadius: "16px", 
+              padding: "14px 28px", 
               backgroundColor: colors.primaryDark, 
-              boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)", 
-              fontWeight: 600 
+              boxShadow: `0 8px 20px -4px ${colors.primaryDark}50`, 
+              fontWeight: 800,
+              fontSize: "14px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
             }}
           >
             New Inbound
@@ -227,12 +250,7 @@ const Inventory: React.FC = () => {
       </div>
 
       <div style={styles.statsRow}>
-        {[
-          { label: "Asset Value", value: "$1.4M", icon: <Layers size={22} />, color: colors.primaryDark, trend: "+8.2%" },
-          { label: "Critical Stock", value: "28 SKU", icon: <AlertTriangle size={22} />, color: colors.danger, trend: "-2.1%" },
-          { label: "Inbound Flow", value: "156 Unit", icon: <Truck size={22} />, color: colors.info, trend: "+12.5%" },
-          { label: "Active Nodes", value: "12 Depot", icon: <MapPin size={22} />, color: colors.warning, trend: "Stable" },
-        ].map((stat, i) => (
+        {stats.map((stat, i) => (
           <div key={i} style={styles.statCardWrapper}>
             <div 
               style={styles.statCard(stat.color)}
@@ -289,7 +307,7 @@ const Inventory: React.FC = () => {
             ]}
             style={{ borderRadius: "14px", flex: 1 }}
           />
-          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px 20px", backgroundColor: "white", border: `1px solid ${colors.border}`, flex: 1 }}>
+          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px 20px", backgroundColor: colors.card, border: `1px solid ${colors.border}`, flex: 1 }}>
             Export
           </Button>
         </div>
@@ -303,14 +321,16 @@ const Inventory: React.FC = () => {
           {activeTab === "live" ? (
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: "1000px" }}>
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc" }}>
+                <tr style={{ backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255, 255, 255, 0.02)" }}>
                   {["Asset Details", "SKU Identity", "Global Stock", "Valuation", "Status", "Actions"].map((h, i) => (
                     <th key={i} style={{ padding: "16px 24px", textAlign: "left", fontSize: "12px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: `1px solid ${colors.border}` }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {inventoryItems.map((item) => (
+                {filteredProducts.map((item) => {
+                  const status = item.stock > 20 ? "In Stock" : item.stock > 0 ? "Low Stock" : "Out of Stock";
+                  return (
                   <tr 
                     key={item.id} 
                     style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease", backgroundColor: hoveredRow === item.id ? "rgba(79, 70, 229, 0.02)" : "transparent" }}
@@ -329,26 +349,26 @@ const Inventory: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
-                      <code style={{ fontSize: "12px", fontWeight: 600, backgroundColor: colors.bg, padding: "4px 8px", borderRadius: "6px", color: colors.primaryDark, border: `1px solid ${colors.border}` }}>{item.sku}</code>
+                      <code style={{ fontSize: "12px", fontWeight: 600, backgroundColor: colors.bg, padding: "4px 8px", borderRadius: "6px", color: colors.primaryDark, border: `1px solid ${colors.border}` }}>{item.id.slice(-6).toUpperCase()}</code>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span style={{ fontSize: "14px", fontWeight: 700, color: colors.textMain }}>{item.stock}</span>
-                        <span style={{ fontSize: "11px", fontWeight: 600, color: item.trend.startsWith("+") ? colors.success : colors.danger }}>{item.trend}</span>
                       </div>
                     </td>
-                    <td style={{ padding: "16px 24px", fontSize: "15px", fontWeight: 700, color: colors.textMain }}>{item.price}</td>
+                    <td style={{ padding: "16px 24px", fontSize: "15px", fontWeight: 700, color: colors.textMain }}>${item.price.toLocaleString()}</td>
                     <td style={{ padding: "16px 24px" }}>
-                      <Badge variant={item.status === "In Stock" ? "success" : item.status === "Low Stock" ? "warning" : "danger"} dot style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}>{item.status}</Badge>
+                      <Badge variant={status === "In Stock" ? "success" : status === "Low Stock" ? "warning" : "danger"} dot style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}>{status}</Badge>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ display: "flex", gap: "4px" }}>
-                        <IconButton icon={<Edit size={16} />} hoverColor={colors.primaryDark} />
-                        <IconButton icon={<Trash2 size={16} />} hoverColor={colors.danger} />
+                        <div onClick={() => deleteProductMutation.mutate(item.id)}>
+                          <IconButton icon={<Trash2 size={16} />} hoverColor={colors.danger} />
+                        </div>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           ) : (
@@ -409,7 +429,7 @@ const Inventory: React.FC = () => {
           <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMuted }}>Telemetric Sync: {activeTab === "live" ? "Inventory Node Active" : "Logistics Hub Linked"}</p>
           <div style={{ display: "flex", gap: "10px" }}>
             <Button variant="ghost" style={{ borderRadius: "12px", fontWeight: 700 }}>Previous</Button>
-            <Button variant="secondary" style={{ borderRadius: "12px", fontWeight: 700, backgroundColor: "white", border: `1px solid ${colors.border}` }}>Next Sector</Button>
+            <Button variant="secondary" style={{ borderRadius: "12px", fontWeight: 700, backgroundColor: colors.card, border: `1px solid ${colors.border}` }}>Next Sector</Button>
           </div>
         </div>
       </Card>
@@ -417,8 +437,8 @@ const Inventory: React.FC = () => {
       {/* Inbound Modal (Inline CSS) */}
       {isModalOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(10px)" }} onClick={() => setIsModalOpen(false)} />
-          <div style={{ position: "relative", width: "100%", maxWidth: "540px", backgroundColor: "white", borderRadius: "24px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.3s ease" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(10px)" }} onClick={() => setIsModalOpen(false)} />
+          <div style={{ position: "relative", width: "100%", maxWidth: "540px", backgroundColor: colors.card, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "var(--card-shadow)", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.3s ease" }}>
             <div style={{ padding: "24px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0, letterSpacing: "-0.02em" }}>New Inbound Shipment</h2>
               <button onClick={() => setIsModalOpen(false)} style={{ border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", display: "flex", padding: "4px", borderRadius: "8px", transition: "background-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}><X size={20} /></button>
@@ -430,7 +450,7 @@ const Inventory: React.FC = () => {
                   placeholder="e.g. Wireless Headphones" 
                   style={{ borderRadius: "12px" }} 
                   value={inboundForm.name}
-                  onChange={(e) => setInboundForm({ ...inboundForm, name: e.target.value })}
+                  onChange={(e: any) => setInboundForm({ ...inboundForm, name: e.target.value })}
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
@@ -441,7 +461,7 @@ const Inventory: React.FC = () => {
                     placeholder="0" 
                     style={{ borderRadius: "12px" }} 
                     value={inboundForm.qty}
-                    onChange={(e) => setInboundForm({ ...inboundForm, qty: e.target.value })}
+                    onChange={(e: any) => setInboundForm({ ...inboundForm, qty: e.target.value })}
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -450,7 +470,7 @@ const Inventory: React.FC = () => {
                     type="date" 
                     style={{ borderRadius: "12px" }} 
                     value={inboundForm.eta}
-                    onChange={(e) => setInboundForm({ ...inboundForm, eta: e.target.value })}
+                    onChange={(e: any) => setInboundForm({ ...inboundForm, eta: e.target.value })}
                   />
                 </div>
               </div>
@@ -464,9 +484,25 @@ const Inventory: React.FC = () => {
                 />
               </div>
             </div>
-            <div style={{ padding: "20px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: "#f8fafc", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+            <div style={{ padding: "20px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255, 255, 255, 0.02)", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
               <Button variant="ghost" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", fontWeight: 600 }}>Cancel</Button>
-              <Button variant="primary" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", backgroundColor: colors.primaryDark, fontWeight: 600 }}>Create Shipment</Button>
+              <Button 
+                variant="primary" 
+                onClick={handleCreateInbound} 
+                rightIcon={<ArrowRight size={18} />}
+                style={{ 
+                  borderRadius: "14px", 
+                  padding: "14px 28px",
+                  backgroundColor: colors.primaryDark, 
+                  boxShadow: `0 8px 15px -3px ${colors.primaryDark}40`,
+                  fontWeight: 800,
+                  fontSize: "14px",
+                  opacity: createProductMutation.isPending ? 0.7 : 1,
+                  pointerEvents: createProductMutation.isPending ? "none" : "auto"
+                }}
+              >
+                {createProductMutation.isPending ? "Creating..." : "Create Shipment"}
+              </Button>
             </div>
           </div>
         </div>
