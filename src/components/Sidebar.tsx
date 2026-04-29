@@ -18,6 +18,9 @@ import {
   CreditCard,
   Monitor,
   User,
+  Activity,
+  Truck,
+  ShoppingCart,
 } from "lucide-react";
 
 // --- Types ---
@@ -69,7 +72,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
         { id: "pos", path: "/screen", icon: <Monitor size={20} />, label: "Terminal", badge: "New" },
         { id: "inv", path: "/inventory", icon: <Package size={20} />, label: "Inventory", badge: "Live" },
         { id: "pro", path: "/products", icon: <LayoutGrid size={20} />, label: "Products" },
+        { id: "stock", path: "/stock-history", icon: <Activity size={20} />, label: "Stock History" },
         { id: "cus", path: "/customers", icon: <Users size={20} />, label: "Customers" },
+        { id: "sup", path: "/supplier", icon: <Truck size={20} />, label: "Suppliers" },
+        { id: "pur", path: "/purchase", icon: <ShoppingCart size={20} />, label: "Purchases" },
       ]
     },
     {
@@ -206,9 +212,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                   fontSize: "13px",
                   fontWeight: 600,
                   outline: "none",
-                  transition: "all 0.3s ease"
+                  transition: "all 0.3s ease",
+                  color: sidebarColors.textMain
                 }}
-                className="focus:bg-white focus:border-indigo-400 focus:shadow-sm"
+                onFocus={(e) => {
+                  e.target.style.backgroundColor = theme === "light" ? "#ffffff" : "rgba(255,255,255,0.08)";
+                  e.target.style.borderColor = sidebarColors.primary;
+                }}
+                onBlur={(e) => {
+                  e.target.style.backgroundColor = theme === "light" ? "rgba(241, 245, 249, 0.5)" : "rgba(255, 255, 255, 0.03)";
+                  e.target.style.borderColor = sidebarColors.border;
+                }}
               />
             </div>
         </div>

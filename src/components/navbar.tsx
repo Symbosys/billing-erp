@@ -20,7 +20,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
   const navbarColors = {
     ...colors,
-    headerBg: theme === "light" ? "rgba(255, 255, 255, 0.8)" : "rgba(15, 23, 42, 0.8)",
+    headerBg:
+      theme === "light" ? "rgba(255, 255, 255, 0.8)" : "rgba(15, 23, 42, 0.8)",
     white: theme === "light" ? "#ffffff" : "#1e293b",
     emerald: "#10b981",
   };
@@ -58,7 +59,11 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     },
     searchInput: {
       width: "100%",
-      backgroundColor: isSearchFocused ? navbarColors.white : theme === "light" ? "rgba(241, 245, 249, 0.6)" : "rgba(255, 255, 255, 0.05)",
+      backgroundColor: isSearchFocused
+        ? navbarColors.white
+        : theme === "light"
+          ? "rgba(241, 245, 249, 0.6)"
+          : "rgba(255, 255, 255, 0.05)",
       border: `1px solid ${isSearchFocused ? navbarColors.primary : isSearchHovered ? (theme === "light" ? "#cbd5e1" : "rgba(255,255,255,0.2)") : "transparent"}`,
       borderRadius: "16px",
       padding: "12px 16px 12px 48px",
@@ -67,7 +72,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       color: navbarColors.textMain,
       outline: "none",
       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      boxShadow: isSearchFocused ? `0 0 0 4px ${navbarColors.primary}10` : "none",
+      boxShadow: isSearchFocused
+        ? `0 0 0 4px ${navbarColors.primary}10`
+        : "none",
     },
     searchIcon: {
       position: "absolute" as const,
@@ -115,14 +122,14 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       padding: "4px",
       borderRadius: "14px",
       transition: "all 0.2s ease",
-    }
+    },
   };
 
   return (
     <header style={styles.header}>
       {/* Left: Menu Toggle (Logo removed as requested) */}
       <div style={{ display: "flex", alignItems: "center", width: "240px" }}>
-        <button 
+        <button
           onClick={onMenuClick}
           style={{
             padding: "10px",
@@ -137,7 +144,10 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = theme === "light" ? "rgba(99, 102, 241, 0.08)" : "rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.backgroundColor =
+              theme === "light"
+                ? "rgba(99, 102, 241, 0.08)"
+                : "rgba(255, 255, 255, 0.05)";
             e.currentTarget.style.color = navbarColors.primary;
           }}
           onMouseLeave={(e) => {
@@ -151,7 +161,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
       {/* Center: Restructured Search Box */}
       <div style={styles.searchContainer}>
-        <div 
+        <div
           style={styles.searchWrapper}
           onMouseEnter={() => setIsSearchHovered(true)}
           onMouseLeave={() => setIsSearchHovered(false)}
@@ -177,15 +187,64 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <div style={styles.statusBadge}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ position: "relative", width: "8px", height: "8px" }}>
-              <div style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: navbarColors.emerald, borderRadius: "50%" }}></div>
-              <div className="ping-animation" style={{ position: "absolute", width: "100%", height: "100%", backgroundColor: navbarColors.emerald, borderRadius: "50%", opacity: 0.6 }}></div>
+              <div
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: navbarColors.emerald,
+                  borderRadius: "50%",
+                }}
+              ></div>
+              <div
+                className="ping-animation"
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: navbarColors.emerald,
+                  borderRadius: "50%",
+                  opacity: 0.6,
+                }}
+              ></div>
             </div>
-            <span style={{ fontSize: "10px", fontWeight: 800, color: navbarColors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Live Sync</span>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 800,
+                color: navbarColors.textMuted,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Live Sync
+            </span>
           </div>
-          <div style={{ width: "1px", height: "12px", backgroundColor: navbarColors.border }}></div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: navbarColors.primary }}>
+          <div
+            style={{
+              width: "1px",
+              height: "12px",
+              backgroundColor: navbarColors.border,
+            }}
+          ></div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              color: navbarColors.primary,
+            }}
+          >
             <Globe size={12} className="spin-animation" />
-            <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase" }}>Global</span>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 800,
+                textTransform: "uppercase",
+              }}
+            >
+              Global
+            </span>
           </div>
         </div>
 
@@ -215,30 +274,66 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           }}
         >
           {theme === "light" ? (
-            <Moon size={20} fill={navbarColors.textMuted} fillOpacity={0.1} className="theme-icon" />
+            <Moon
+              size={20}
+              fill={navbarColors.textMuted}
+              fillOpacity={0.1}
+              className="theme-icon"
+            />
           ) : (
-            <Sun size={20} fill={navbarColors.textMuted} fillOpacity={0.1} className="theme-icon" />
+            <Sun
+              size={20}
+              fill={navbarColors.textMuted}
+              fillOpacity={0.1}
+              className="theme-icon"
+            />
           )}
         </button>
 
         {/* Profile */}
         <div style={styles.profileWrapper} className="profile-group">
-          <div style={{ textAlign: "right", display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "13px", fontWeight: 800, color: navbarColors.textMain }}>Alexander W.</span>
-            <span style={{ fontSize: "10px", fontWeight: 700, color: navbarColors.textMuted, textTransform: "uppercase", opacity: 0.8 }}>Master Admin</span>
+          <div
+            style={{
+              textAlign: "right",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 800,
+                color: navbarColors.textMain,
+              }}
+            >
+              Alexander W.
+            </span>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                color: navbarColors.textMuted,
+                textTransform: "uppercase",
+                opacity: 0.8,
+              }}
+            >
+              Master Admin
+            </span>
           </div>
-          <div style={{ 
-            width: "44px", 
-            height: "44px", 
-            borderRadius: "14px", 
-            backgroundColor: navbarColors.bg, 
-            border: `2px solid ${navbarColors.white}`,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-            overflow: "hidden"
-          }}>
-            <img 
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop" 
-              alt="Avatar" 
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "14px",
+              backgroundColor: navbarColors.bg,
+              border: `2px solid ${navbarColors.white}`,
+              boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+              overflow: "hidden",
+            }}
+          >
+            <img
+              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop"
+              alt="Avatar"
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>

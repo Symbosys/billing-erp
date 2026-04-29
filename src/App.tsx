@@ -18,16 +18,19 @@ import Customers from "./pages/Customers";
 import Billing from "./pages/Billing";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import StockHistoryPage from "./pages/screen";
+import SupplierPage from "./pages/Supplier";
+import PurchasePage from "./pages/Purchase";
 
 // Layout for authenticated pages
-const AppLayout = ({ 
-  children, 
-  isMobileOpen, 
-  setIsMobileOpen 
-}: { 
-  children: React.ReactNode, 
-  isMobileOpen: boolean, 
-  setIsMobileOpen: (open: boolean) => void 
+const AppLayout = ({
+  children,
+  isMobileOpen,
+  setIsMobileOpen,
+}: {
+  children: React.ReactNode;
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
 }) => (
   <div className="app-container">
     <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
@@ -60,7 +63,10 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Dashboard />
               </AppLayout>
             </ProtectedRoute>
@@ -70,7 +76,10 @@ function App() {
           path="/inventory"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Inventory />
               </AppLayout>
             </ProtectedRoute>
@@ -80,7 +89,10 @@ function App() {
           path="/customers"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Customers />
               </AppLayout>
             </ProtectedRoute>
@@ -90,7 +102,10 @@ function App() {
           path="/products"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Products />
               </AppLayout>
             </ProtectedRoute>
@@ -100,7 +115,10 @@ function App() {
           path="/screen"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <POSScreen />
               </AppLayout>
             </ProtectedRoute>
@@ -112,7 +130,10 @@ function App() {
           path="/billing"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Billing />
               </AppLayout>
             </ProtectedRoute>
@@ -122,7 +143,10 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Analytics />
               </AppLayout>
             </ProtectedRoute>
@@ -132,8 +156,50 @@ function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <AppLayout isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen}>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
                 <Settings />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock-history"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <StockHistoryPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/supplier"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <SupplierPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/purchase"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <PurchasePage />
               </AppLayout>
             </ProtectedRoute>
           }

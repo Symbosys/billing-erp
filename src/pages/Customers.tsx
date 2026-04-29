@@ -488,7 +488,12 @@ const Customers: React.FC = () => {
                 </thead>
                 <tbody>
                   {paginatedCustomers.map((customer) => (
-                    <tr key={customer.id} style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease" }} className="hover:bg-slate-50/50">
+                    <tr 
+                      key={customer.id} 
+                      style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease" }} 
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                    >
                       <td style={{ padding: "24px 40px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                           <div style={{ width: "52px", height: "52px", borderRadius: "18px", backgroundColor: colors.bg, color: colors.primary, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", border: `1px solid ${colors.primary}10` }}>
