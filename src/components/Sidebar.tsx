@@ -88,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
     {
       title: "System",
       items: [
+        { id: "perm", path: "/permissions", icon: <ShieldCheck size={20} />, label: "Permissions" },
         { 
           id: "set", 
           path: "/settings", 

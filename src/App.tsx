@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import StockHistoryPage from "./pages/screen";
 import SupplierPage from "./pages/Supplier";
 import PurchasePage from "./pages/Purchase";
+import Permissions from "./pages/Permissions";
 
 // Layout for authenticated pages
 const AppLayout = ({
@@ -200,6 +201,19 @@ function App() {
                 setIsMobileOpen={setIsMobileOpen}
               >
                 <PurchasePage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/permissions"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <Permissions />
               </AppLayout>
             </ProtectedRoute>
           }
