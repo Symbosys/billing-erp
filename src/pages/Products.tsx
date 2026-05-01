@@ -329,7 +329,7 @@ const Products: React.FC = () => {
               onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 20px -5px rgba(0,0,0,0.1)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.05)"; }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div style={styles.iconWrapper(stat.color)}>{stat.icon}</div>
                 <Badge variant={i === 1 ? "warning" : "success"} style={{ fontSize: "10px", fontWeight: 700 }}>{stat.change}</Badge>
               </div>
@@ -350,7 +350,7 @@ const Products: React.FC = () => {
             placeholder="Search products, brands, or categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+            style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
           />
         </div>
         
@@ -487,7 +487,7 @@ const Products: React.FC = () => {
                   <Input 
                     leftIcon={<Package size={18} />}
                     placeholder="e.g. Quantum Processor X1"
-                    style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                    style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
@@ -500,7 +500,7 @@ const Products: React.FC = () => {
                       type="number"
                       leftIcon={<DollarSign size={18} />}
                       placeholder="0.00"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
                     />
@@ -511,7 +511,7 @@ const Products: React.FC = () => {
                       type="number"
                       leftIcon={<Layers size={18} />}
                       placeholder="Available units"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                       value={formData.stock}
                       onChange={(e) => setFormData({...formData, stock: e.target.value})}
                     />
@@ -524,7 +524,7 @@ const Products: React.FC = () => {
                     <Input 
                       leftIcon={<Tag size={18} />}
                       placeholder="e.g. Sony / Apple"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                       value={formData.brand}
                       onChange={(e) => setFormData({...formData, brand: e.target.value})}
                     />

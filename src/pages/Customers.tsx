@@ -344,7 +344,7 @@ const Customers: React.FC = () => {
                 e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.05)";
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div style={styles.statIconBox(stat.color)}>{stat.icon}</div>
                 <Badge variant={stat.change.startsWith('+') ? "success" : "danger"} style={{ fontWeight: 700, fontSize: "10px" }}>
                   {stat.change}
@@ -633,7 +633,7 @@ const Customers: React.FC = () => {
                     <Input 
                       leftIcon={<Users size={18} />}
                       placeholder="John Doe / Acme Corp"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}`, paddingLeft: "48px" }}
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       required
@@ -645,7 +645,7 @@ const Customers: React.FC = () => {
                       type="email"
                       leftIcon={<Mail size={18} />}
                       placeholder="john@example.com"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}`, paddingLeft: "48px" }}
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required
@@ -656,7 +656,7 @@ const Customers: React.FC = () => {
                     <Input 
                       leftIcon={<Phone size={18} />}
                       placeholder="+1 234 567 890"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}`, paddingLeft: "48px" }}
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     />
@@ -666,7 +666,7 @@ const Customers: React.FC = () => {
                     <Input 
                       leftIcon={<MapPin size={18} />}
                       placeholder="New York, USA"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}`, paddingLeft: "48px" }}
                       value={formData.location}
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
                     />
@@ -677,7 +677,7 @@ const Customers: React.FC = () => {
                       type="number"
                       leftIcon={<TrendingUp size={18} />}
                       placeholder="0.00"
-                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}` }}
+                      style={{ borderRadius: "18px", height: "54px", fontSize: "15px", backgroundColor: colors.input, border: `2px solid ${colors.border}`, paddingLeft: "48px" }}
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
                       required

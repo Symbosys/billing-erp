@@ -185,7 +185,7 @@ const SupplierPage: React.FC = () => {
             placeholder="Search suppliers by name or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ borderRadius: "16px", height: "50px", backgroundColor: colors.input, borderColor: colors.border }}
+            style={{ borderRadius: "16px", height: "50px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
           />
         </div>
       </div>
@@ -280,7 +280,7 @@ const SupplierPage: React.FC = () => {
                     placeholder="e.g. Acme Corp"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    style={{ borderRadius: "14px", height: "50px", backgroundColor: colors.input, borderColor: colors.border }}
+                    style={{ borderRadius: "14px", height: "50px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -290,7 +290,7 @@ const SupplierPage: React.FC = () => {
                     placeholder="e.g. +1 234 567 890"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    style={{ borderRadius: "14px", height: "50px", backgroundColor: colors.input, borderColor: colors.border }}
+                    style={{ borderRadius: "14px", height: "50px", backgroundColor: colors.input, borderColor: colors.border, paddingLeft: "48px" }}
                   />
                 </div>
                 
