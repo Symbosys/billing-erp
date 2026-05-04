@@ -78,7 +78,7 @@ const PermissionModal: React.FC<ModalProps> = ({
           <p style={{ fontSize: "13px", color: colors.textMuted, margin: "4px 0 0 0" }}>{subtitle}</p>
         </div>
         <button onClick={onClose} style={{ padding: "8px", borderRadius: "12px", border: "none", backgroundColor: colors.bg, color: colors.textMuted, cursor: "pointer" }}>
-          <X size={20} />
+          <X size={20} />ghfg
         </button>
       </div>
       {/* Body */}

@@ -1,42 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Search, 
-  Plus, 
-  Download, 
-  AlertTriangle, 
+import {
+  Search,
+  Download,
+  AlertTriangle,
   Layers,
   Box,
   Truck,
   Trash2,
   RefreshCw,
-  Calendar,
   MapPin,
-  X,
-  ArrowRight
 } from "lucide-react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import Input from "../components/Input";
 import Select from "../components/Select";
 import { useTheme } from "../context/ThemeContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { useProducts, useCreateProduct, useDeleteProduct } from "../config/hooks/useProduct";
+import {
+  useProducts,
+  useDeleteProduct,
+} from "../config/hooks/useProduct";
 import { useInventoryStats } from "../config/hooks/useInventory";
 
 const Inventory: React.FC = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
-  const [activeTab, setActiveTab] = useState<"live" | "inbound">("live");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [hoveredRow, setHoveredRow] = useState<number | string | null>(null);
-  const [inboundForm, setInboundForm] = useState({
-    name: "",
-    qty: "",
-    eta: "",
-    hub: "a"
-  });
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -51,50 +41,59 @@ const Inventory: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading: isProductsLoading } = useProducts();
-  const createProductMutation = useCreateProduct();
   const deleteProductMutation = useDeleteProduct();
   const { data: statsData, isLoading: isStatsLoading } = useInventoryStats();
 
   const defaultStats = [
-    { label: "Asset Value", value: "---", trend: "---", icon: <Layers size={22} />, color: colors.primaryDark },
-    { label: "Critical Stock", value: "---", trend: "---", icon: <AlertTriangle size={22} />, color: colors.danger },
-    { label: "Inbound Flow", value: "---", trend: "---", icon: <Truck size={22} />, color: colors.info },
-    { label: "Active Nodes", value: "---", trend: "---", icon: <MapPin size={22} />, color: colors.warning }
+    {
+      label: "Asset Value",
+      value: "---",
+      trend: "---",
+      icon: <Layers size={22} />,
+      color: colors.primaryDark,
+    },
+    {
+      label: "Critical Stock",
+      value: "---",
+      trend: "---",
+      icon: <AlertTriangle size={22} />,
+      color: colors.danger,
+    },
+    {
+      label: "Inbound Flow",
+      value: "---",
+      trend: "---",
+      icon: <Truck size={22} />,
+      color: colors.info,
+    },
+    {
+      label: "Active Nodes",
+      value: "---",
+      trend: "---",
+      icon: <MapPin size={22} />,
+      color: colors.warning,
+    },
   ];
 
-  const stats = statsData ? statsData.map((stat, i) => ({
-    ...stat,
-    icon: defaultStats[i].icon,
-    color: defaultStats[i].color
-  })) : defaultStats;
+  const stats = statsData
+    ? statsData.map((stat, i) => ({
+        ...stat,
+        icon: defaultStats[i].icon,
+        color: defaultStats[i].color,
+      }))
+    : defaultStats;
 
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === "all" || p.category.toLowerCase().includes(filterCategory.toLowerCase());
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" ||
+      p.category.toLowerCase().includes(filterCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   });
 
-  const handleCreateInbound = async () => {
-    if (!inboundForm.name || !inboundForm.qty) return;
-    try {
-      await createProductMutation.mutateAsync({
-        name: inboundForm.name,
-        category: "General",
-        stock: parseInt(inboundForm.qty) || 0,
-        price: 0,
-      });
-      setIsModalOpen(false);
-      setInboundForm({ name: "", qty: "", eta: "", hub: "a" });
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
-  const inboundStock = [
-    { id: "INB-882", item: "Liquid Cooling Kit", qty: 50, source: "Shenzhen Depot", eta: "Oct 24, 2024", status: "In Transit" },
-    { id: "INB-883", item: "NVIDIA RTX 4090", qty: 25, source: "Global Logistics", eta: "Oct 25, 2024", status: "Processing" },
-    { id: "INB-884", item: "Studio Condenser Mic", qty: 100, source: "Austin Whse", eta: "Oct 22, 2024", status: "Delayed" },
-  ];
 
   const styles = {
     container: {
@@ -110,12 +109,12 @@ const Inventory: React.FC = () => {
       justifyContent: "space-between",
       alignItems: isMobile ? "flex-start" : "center",
       gap: "24px",
-      marginBottom: "8px"
+      marginBottom: "8px",
     },
     titleSection: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: "4px"
+      gap: "4px",
     },
     title: {
       fontSize: isMobile ? "28px" : "36px",
@@ -125,38 +124,14 @@ const Inventory: React.FC = () => {
       margin: 0,
       display: "flex",
       alignItems: "center",
-      gap: "12px"
+      gap: "12px",
     },
     subtitle: {
       color: colors.textMuted,
       margin: 0,
       fontWeight: 500,
-      fontSize: isMobile ? "14px" : "16px"
+      fontSize: isMobile ? "14px" : "16px",
     },
-    tabGroup: {
-      display: "flex",
-      gap: "4px",
-      padding: "4px",
-      backgroundColor: colors.card,
-      borderRadius: "16px",
-      border: `1px solid ${colors.border}`,
-      width: "fit-content",
-      boxShadow: "var(--card-shadow)",
-    },
-    tab: (isActive: boolean) => ({
-      padding: "8px 20px",
-      borderRadius: "12px",
-      border: "none",
-      backgroundColor: isActive ? colors.primary : "transparent",
-      color: isActive ? "white" : colors.textMuted,
-      fontSize: "14px",
-      fontWeight: 600,
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-    }),
     statsRow: {
       display: "flex",
       overflowX: "auto" as const,
@@ -171,7 +146,7 @@ const Inventory: React.FC = () => {
     statCardWrapper: {
       flex: isMobile ? "0 0 280px" : isTablet ? "0 0 300px" : "1",
       scrollSnapAlign: "start" as const,
-      minWidth: "260px"
+      minWidth: "260px",
     },
     statCard: (_color: string) => ({
       padding: isMobile ? "20px" : "24px",
@@ -207,7 +182,7 @@ const Inventory: React.FC = () => {
       position: "sticky" as const,
       top: "80px", // Aligned with Navbar height
       zIndex: 10,
-    }
+    },
   };
 
   return (
@@ -215,307 +190,410 @@ const Inventory: React.FC = () => {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.titleSection}>
-          <h1 style={styles.title}>
-            Inventory Matrix
-          </h1>
-          <p style={styles.subtitle}>Real-time oversight of global assets and inbound logistics.</p>
+          <h1 style={styles.title}>Inventory Matrix</h1>
+          <p style={styles.subtitle}>
+            Real-time oversight of global assets and inbound logistics.
+          </p>
         </div>
-        <div style={{ display: "flex", gap: "12px", width: isMobile ? "100%" : "auto" }}>
-          <Button 
-            variant="secondary" 
-            leftIcon={<RefreshCw size={18} className={isProductsLoading || isStatsLoading ? "animate-spin" : ""} />} 
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["inventoryStats"] });
-              queryClient.invalidateQueries({ queryKey: ["products"] });
-            }}
-            style={{ borderRadius: "14px", padding: "12px", backgroundColor: colors.card, border: `1px solid ${colors.border}` }} 
-          />
-          <Button 
-            variant="primary" 
-            leftIcon={<Plus size={20} />} 
-            onClick={() => setIsModalOpen(true)}
-            style={{ 
-              borderRadius: "16px", 
-              padding: "14px 28px", 
-              backgroundColor: colors.primaryDark, 
-              boxShadow: `0 8px 20px -4px ${colors.primaryDark}50`, 
-              fontWeight: 800,
-              fontSize: "14px",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            }}
-          >
-            New Inbound
-          </Button>
-        </div>
+        <Button
+          variant="secondary"
+          leftIcon={
+            <RefreshCw
+              size={18}
+              className={
+                isProductsLoading || isStatsLoading ? "animate-spin" : ""
+              }
+            />
+          }
+          onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ["inventoryStats"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+          }}
+          style={{
+            borderRadius: "14px",
+            padding: "12px",
+            backgroundColor: colors.card,
+            border: `1px solid ${colors.border}`,
+          }}
+        />
       </div>
 
       <div style={styles.statsRow}>
         {stats.map((stat, i) => (
           <div key={i} style={styles.statCardWrapper}>
-            <div 
+            <div
               style={styles.statCard(stat.color)}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 20px -5px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.05)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow =
+                  "0 12px 20px -5px rgba(0,0,0,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0,0,0,0.05)";
+              }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
                 <div style={styles.iconWrapper(stat.color)}>{stat.icon}</div>
-                <span style={{ fontSize: "12px", fontWeight: 700, color: stat.trend.startsWith("+") ? colors.success : stat.trend.startsWith("-") ? colors.danger : colors.textMuted }}>{stat.trend}</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: stat.trend.startsWith("+")
+                      ? colors.success
+                      : stat.trend.startsWith("-")
+                        ? colors.danger
+                        : colors.textMuted,
+                  }}
+                >
+                  {stat.trend}
+                </span>
               </div>
               <div>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: colors.textMuted, margin: "0 0 4px 0" }}>{stat.label}</p>
-                <h4 style={{ fontSize: "24px", fontWeight: 800, color: colors.textMain, margin: 0 }}>{stat.value}</h4>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: colors.textMuted,
+                    margin: "0 0 4px 0",
+                  }}
+                >
+                  {stat.label}
+                </p>
+                <h4
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: 800,
+                    color: colors.textMain,
+                    margin: 0,
+                  }}
+                >
+                  {stat.value}
+                </h4>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={styles.tabGroup}>
-        <button style={styles.tab(activeTab === "live")} onClick={() => setActiveTab("live")}>
-          <Layers size={16} />
-          Live Inventory
-        </button>
-        <button style={styles.tab(activeTab === "inbound")} onClick={() => setActiveTab("inbound")}>
-          <Truck size={16} />
-          Inbound Stock
-          <span style={{ backgroundColor: activeTab === "inbound" ? "white" : colors.warning, color: activeTab === "inbound" ? colors.primaryDark : "white", padding: "1px 6px", borderRadius: "6px", fontSize: "10px", marginLeft: "4px" }}>3</span>
-        </button>
-      </div>
+
 
       <div style={styles.filterBar}>
         <div style={{ position: "relative", flex: 3 }}>
-          <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: colors.textMuted }} size={18} />
-          <input 
-            style={{ width: "100%", padding: "12px 16px 12px 48px", borderRadius: "14px", border: `1px solid ${colors.border}`, backgroundColor: colors.bg, outline: "none", fontSize: "14px", fontWeight: 500, transition: "border-color 0.2s" }}
-            placeholder={activeTab === "live" ? "Search assets by SKU, ID..." : "Search shipments by ID, source..."}
+          <Search
+            style={{
+              position: "absolute",
+              left: "16px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: colors.textMuted,
+            }}
+            size={18}
+          />
+          <input
+            style={{
+              width: "100%",
+              padding: "12px 16px 12px 48px",
+              borderRadius: "14px",
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.bg,
+              outline: "none",
+              fontSize: "14px",
+              fontWeight: 500,
+              transition: "border-color 0.2s",
+            }}
+            placeholder="Search assets by SKU, ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={(e) => e.target.style.borderColor = colors.primary}
-            onBlur={(e) => e.target.style.borderColor = colors.border}
+            onFocus={(e) => (e.target.style.borderColor = colors.primary)}
+            onBlur={(e) => (e.target.style.borderColor = colors.border)}
           />
         </div>
         <div style={{ display: "flex", gap: "12px", flex: 2 }}>
-          <Select 
+          <Select
             value={filterCategory}
             onChange={(val) => setFilterCategory(val as string)}
             options={[
-              { label: "All Sectors", value: "all" }, 
-              { label: "Electronics", value: "elec" }, 
+              { label: "All Sectors", value: "all" },
+              { label: "Electronics", value: "elec" },
               { label: "Furniture", value: "furn" },
-              { label: "Logistics", value: "logi" }
+              { label: "Logistics", value: "logi" },
             ]}
             style={{ borderRadius: "14px", flex: 1 }}
           />
-          <Button variant="secondary" leftIcon={<Download size={18} />} style={{ borderRadius: "14px", padding: "12px 20px", backgroundColor: colors.card, border: `1px solid ${colors.border}`, flex: 1 }}>
+          <Button
+            variant="secondary"
+            leftIcon={<Download size={18} />}
+            style={{
+              borderRadius: "14px",
+              padding: "12px 20px",
+              backgroundColor: colors.card,
+              border: `1px solid ${colors.border}`,
+              flex: 1,
+            }}
+          >
             Export
           </Button>
         </div>
       </div>
 
       {/* Dynamic Content Section */}
-      <Card 
-        style={{ borderRadius: "32px", border: `1px solid ${colors.border}`, boxShadow: "0 20px 40px -20px rgba(0,0,0,0.05)", overflow: "hidden" }}
+      <Card
+        style={{
+          borderRadius: "32px",
+          border: `1px solid ${colors.border}`,
+          boxShadow: "0 20px 40px -20px rgba(0,0,0,0.05)",
+          overflow: "hidden",
+        }}
       >
         <div style={{ overflowX: "auto" }}>
-          {activeTab === "live" ? (
-            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, minWidth: "1000px" }}>
+          <table
+              style={{
+                width: "100%",
+                borderCollapse: "separate",
+                borderSpacing: 0,
+                minWidth: "1000px",
+              }}
+            >
               <thead>
-                <tr style={{ backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255, 255, 255, 0.02)" }}>
-                  {["Asset Details", "SKU Identity", "Global Stock", "Valuation", "Status", "Actions"].map((h, i) => (
-                    <th key={i} style={{ padding: "16px 24px", textAlign: "left", fontSize: "12px", fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: `1px solid ${colors.border}` }}>{h}</th>
+                <tr
+                  style={{
+                    backgroundColor:
+                      theme === "light"
+                        ? "#f8fafc"
+                        : "rgba(255, 255, 255, 0.02)",
+                  }}
+                >
+                  {[
+                    "Asset Details",
+                    "SKU Identity",
+                    "Global Stock",
+                    "Valuation",
+                    "Status",
+                    "Actions",
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      style={{
+                        padding: "16px 24px",
+                        textAlign: "left",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: colors.textMuted,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        borderBottom: `1px solid ${colors.border}`,
+                      }}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.map((item) => {
-                  const status = item.stock > 20 ? "In Stock" : item.stock > 0 ? "Low Stock" : "Out of Stock";
+                  const status =
+                    item.stock > 20
+                      ? "In Stock"
+                      : item.stock > 0
+                        ? "Low Stock"
+                        : "Out of Stock";
                   return (
-                  <tr 
-                    key={item.id} 
-                    style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease", backgroundColor: hoveredRow === item.id ? "rgba(79, 70, 229, 0.02)" : "transparent" }}
-                    onMouseEnter={() => setHoveredRow(item.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div style={{ width: "40px", height: "40px", borderRadius: "12px", backgroundColor: colors.bg, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primaryDark }}>
-                          <Box size={20} />
+                    <tr
+                      key={item.id}
+                      style={{
+                        borderBottom: `1px solid ${colors.border}`,
+                        transition: "background-color 0.3s ease",
+                        backgroundColor:
+                          hoveredRow === item.id
+                            ? "rgba(79, 70, 229, 0.02)"
+                            : "transparent",
+                      }}
+                      onMouseEnter={() => setHoveredRow(item.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                    >
+                      <td style={{ padding: "16px 24px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              borderRadius: "12px",
+                              backgroundColor: colors.bg,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: colors.primaryDark,
+                            }}
+                          >
+                            <Box size={20} />
+                          </div>
+                          <div>
+                            <h5
+                              style={{
+                                fontWeight: 700,
+                                color: colors.textMain,
+                                fontSize: "15px",
+                                margin: 0,
+                              }}
+                            >
+                              {item.name}
+                            </h5>
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                color: colors.textMuted,
+                                fontWeight: 500,
+                                marginTop: "2px",
+                              }}
+                            >
+                              {item.category}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h5 style={{ fontWeight: 700, color: colors.textMain, fontSize: "15px", margin: 0 }}>{item.name}</h5>
-                          <p style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 500, marginTop: "2px" }}>{item.category}</p>
+                      </td>
+                      <td style={{ padding: "16px 24px" }}>
+                        <code
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            backgroundColor: colors.bg,
+                            padding: "4px 8px",
+                            borderRadius: "6px",
+                            color: colors.primaryDark,
+                            border: `1px solid ${colors.border}`,
+                          }}
+                        >
+                          {item.id.slice(-6).toUpperCase()}
+                        </code>
+                      </td>
+                      <td style={{ padding: "16px 24px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: 700,
+                              color: colors.textMain,
+                            }}
+                          >
+                            {item.stock}
+                          </span>
                         </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <code style={{ fontSize: "12px", fontWeight: 600, backgroundColor: colors.bg, padding: "4px 8px", borderRadius: "6px", color: colors.primaryDark, border: `1px solid ${colors.border}` }}>{item.id.slice(-6).toUpperCase()}</code>
-                    </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "14px", fontWeight: 700, color: colors.textMain }}>{item.stock}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "16px 24px", fontSize: "15px", fontWeight: 700, color: colors.textMain }}>${item.price.toLocaleString()}</td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <Badge variant={status === "In Stock" ? "success" : status === "Low Stock" ? "warning" : "danger"} dot style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700 }}>{status}</Badge>
-                    </td>
-                    <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <div onClick={() => deleteProductMutation.mutate(item.id)}>
-                          <IconButton icon={<Trash2 size={16} />} hoverColor={colors.danger} />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )})}
-              </tbody>
-            </table>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#fafafa", borderBottom: `1px solid ${colors.border}` }}>
-                  {["Shipment ID", "Incoming Asset", "Quantity", "Source Node", "Estimated Arrival", "Current Status"].map((h, i) => (
-                    <th key={i} style={{ padding: "28px 32px", textAlign: "left", fontSize: "12px", fontWeight: 900, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.15em" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {inboundStock.map((shipment) => (
-                  <tr 
-                    key={shipment.id} 
-                    style={{ borderBottom: `1px solid ${colors.border}`, transition: "background-color 0.3s ease", backgroundColor: hoveredRow === shipment.id ? "rgba(79, 70, 229, 0.02)" : "transparent" }}
-                    onMouseEnter={() => setHoveredRow(shipment.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <td style={{ padding: "24px 32px" }}>
-                      <span style={{ fontWeight: 800, color: colors.textMain, fontSize: "14px" }}>{shipment.id}</span>
-                    </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <Truck size={18} style={{ color: colors.primary }} />
-                        <span style={{ fontWeight: 800, color: colors.textMain, fontSize: "15px" }}>{shipment.item}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "24px 32px", fontWeight: 800, color: colors.textMain }}>{shipment.qty} Units</td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.textMuted, fontWeight: 600, fontSize: "13px" }}>
-                        <MapPin size={14} />
-                        {shipment.source}
-                      </div>
-                    </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: colors.textMain, fontWeight: 700, fontSize: "14px" }}>
-                        <Calendar size={14} />
-                        {shipment.eta}
-                      </div>
-                    </td>
-                    <td style={{ padding: "24px 32px" }}>
-                      <Badge 
-                        variant={shipment.status === "In Transit" ? "info" : shipment.status === "Processing" ? "warning" : "danger"} 
-                        dot 
-                        style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 900, borderRadius: "12px" }}
+                      </td>
+                      <td
+                        style={{
+                          padding: "16px 24px",
+                          fontSize: "15px",
+                          fontWeight: 700,
+                          color: colors.textMain,
+                        }}
                       >
-                        {shipment.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                        ${item.price.toLocaleString()}
+                      </td>
+                      <td style={{ padding: "16px 24px" }}>
+                        <Badge
+                          variant={
+                            status === "In Stock"
+                              ? "success"
+                              : status === "Low Stock"
+                                ? "warning"
+                                : "danger"
+                          }
+                          dot
+                          style={{
+                            padding: "4px 10px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {status}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: "16px 24px" }}>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <div
+                            onClick={() =>
+                              deleteProductMutation.mutate(item.id)
+                            }
+                          >
+                            <IconButton
+                              icon={<Trash2 size={16} />}
+                              hoverColor={colors.danger}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-          )}
         </div>
-        <div style={{ padding: "24px 32px", borderTop: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: "14px", fontWeight: 600, color: colors.textMuted }}>Telemetric Sync: {activeTab === "live" ? "Inventory Node Active" : "Logistics Hub Linked"}</p>
+        <div
+          style={{
+            padding: "24px 32px",
+            borderTop: `1px solid ${colors.border}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: colors.textMuted,
+            }}
+          >
+            Telemetric Sync: Inventory Node Active
+          </p>
           <div style={{ display: "flex", gap: "10px" }}>
-            <Button variant="ghost" style={{ borderRadius: "12px", fontWeight: 700 }}>Previous</Button>
-            <Button variant="secondary" style={{ borderRadius: "12px", fontWeight: 700, backgroundColor: colors.card, border: `1px solid ${colors.border}` }}>Next Sector</Button>
+            <Button
+              variant="ghost"
+              style={{ borderRadius: "12px", fontWeight: 700 }}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              style={{
+                borderRadius: "12px",
+                fontWeight: 700,
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              Next Sector
+            </Button>
           </div>
         </div>
       </Card>
 
-      {/* Inbound Modal (Inline CSS) */}
-      {isModalOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(10px)" }} onClick={() => setIsModalOpen(false)} />
-          <div style={{ position: "relative", width: "100%", maxWidth: "540px", backgroundColor: colors.card, borderRadius: "24px", border: `1px solid ${colors.border}`, boxShadow: "var(--card-shadow)", display: "flex", flexDirection: "column", animation: "modalZoomIn 0.3s ease" }}>
-            <div style={{ padding: "24px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ fontSize: "20px", fontWeight: 800, color: colors.textMain, margin: 0, letterSpacing: "-0.02em" }}>New Inbound Shipment</h2>
-              <button onClick={() => setIsModalOpen(false)} style={{ border: "none", backgroundColor: "transparent", color: colors.textMuted, cursor: "pointer", display: "flex", padding: "4px", borderRadius: "8px", transition: "background-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.bg} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}><X size={20} /></button>
-            </div>
-            <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Product Name / SKU</label>
-                <Input 
-                  placeholder="e.g. Wireless Headphones" 
-                  style={{ borderRadius: "12px" }} 
-                  value={inboundForm.name}
-                  onChange={(e: any) => setInboundForm({ ...inboundForm, name: e.target.value })}
-                />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Quantity</label>
-                  <Input 
-                    type="number" 
-                    placeholder="0" 
-                    style={{ borderRadius: "12px" }} 
-                    value={inboundForm.qty}
-                    onChange={(e: any) => setInboundForm({ ...inboundForm, qty: e.target.value })}
-                  />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Expected ETA</label>
-                  <Input 
-                    type="date" 
-                    style={{ borderRadius: "12px" }} 
-                    value={inboundForm.eta}
-                    onChange={(e: any) => setInboundForm({ ...inboundForm, eta: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 700, color: colors.textMain }}>Storage Hub</label>
-                <Select 
-                  options={[{label: "Global Depot Alpha", value: "a"}, {label: "Regional Warehouse Beta", value: "b"}]} 
-                  style={{ borderRadius: "12px" }} 
-                  value={inboundForm.hub}
-                  onChange={(val) => setInboundForm({ ...inboundForm, hub: val as string })}
-                />
-              </div>
-            </div>
-            <div style={{ padding: "20px 32px", borderTop: `1px solid ${colors.border}`, backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255, 255, 255, 0.02)", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)} style={{ borderRadius: "12px", fontWeight: 600 }}>Cancel</Button>
-              <Button 
-                variant="primary" 
-                onClick={handleCreateInbound} 
-                rightIcon={<ArrowRight size={18} />}
-                style={{ 
-                  borderRadius: "14px", 
-                  padding: "14px 28px",
-                  backgroundColor: colors.primaryDark, 
-                  boxShadow: `0 8px 15px -3px ${colors.primaryDark}40`,
-                  fontWeight: 800,
-                  fontSize: "14px",
-                  opacity: createProductMutation.isPending ? 0.7 : 1,
-                  pointerEvents: createProductMutation.isPending ? "none" : "auto"
-                }}
-              >
-                {createProductMutation.isPending ? "Creating..." : "Create Shipment"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes modalZoomIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
         }
       `}</style>
     </div>
@@ -523,10 +601,13 @@ const Inventory: React.FC = () => {
 };
 
 // Helper component for table action buttons
-const IconButton: React.FC<{ icon: React.ReactNode, hoverColor: string }> = ({ icon, hoverColor }) => {
+const IconButton: React.FC<{ icon: React.ReactNode; hoverColor: string }> = ({
+  icon,
+  hoverColor,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
-    <button 
+    <button
       style={{
         padding: "10px",
         borderRadius: "12px",
