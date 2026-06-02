@@ -12,11 +12,21 @@ export interface BillItem {
 
 export interface Bill {
   id: string;
-  customerId: string;
+  customerId?: string | null;
   customer?: any;
   items?: BillItem[];
   totalAmount: number;
   paymentMethod: "CASH" | "CARD" | "UPI" | "OTHER";
+  orderType: "DINE_IN" | "DELIVERY" | "PICK_UP";
+  tableId?: string | null;
+  table?: any;
+  guestsCount: number;
+  billStatus: "PENDING" | "PAID" | "CANCELLED";
+  kotStatus: "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
+  kotNo?: string | null;
+  isBogo: boolean;
+  isComplimentary: boolean;
+  waiterName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,25 +41,69 @@ interface BillResponse {
   };
 }
 
-export const useBills = (page = 1, limit = 100) => {
+export const useBills = (filters: { billStatus?: string; kotStatus?: string; orderType?: string } = {}) => {
+  const queryString = new URLSearchParams(filters as any).toString();
   return useQuery({
-    queryKey: ["bills", page, limit],
+    queryKey: ["bills", filters],
     queryFn: async (): Promise<Bill[]> => {
-      const { data } = await API.get<BillResponse>(`/bill?page=${page}&limit=${limit}`);
+      const { data } = await API.get<BillResponse>(`/bill?${queryString}`);
       return data.data.bills || [];
     },
   });
 };
 
+export interface CreateBillInput {
+  customerId?: string | null;
+  totalAmount: number;
+  paymentMethod: "CASH" | "CARD" | "UPI" | "OTHER";
+  orderType?: "DINE_IN" | "DELIVERY" | "PICK_UP";
+  tableId?: string | null;
+  guestsCount?: number;
+  billStatus?: "PENDING" | "PAID";
+  kotStatus?: "PENDING" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
+  isBogo?: boolean;
+  isComplimentary?: boolean;
+  waiterName?: string | null;
+  items: { productId: string; quantity: number; price: number }[];
+}
+
 export const useCreateBill = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newBill: { customerId: string; items: { productId: string; quantity: number; price: number }[]; totalAmount: number; paymentMethod: "CASH" | "CARD" | "UPI" | "OTHER" }) => {
+    mutationFn: async (newBill: CreateBillInput) => {
       const { data } = await API.post<BillResponse>("/bill", newBill);
       return data.data.bill;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bills"] });
+      queryClient.invalidateQueries({ queryKey: ["diningTables"] });
+    },
+  });
+};
+
+export const useUpdateKOTStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data } = await API.put<BillResponse>(`/bill/${id}/kot-status`, { status });
+      return data.data.bill;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bills"] });
+    },
+  });
+};
+
+export const useSettleBill = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, paymentMethod }: { id: string; paymentMethod: string }) => {
+      const { data } = await API.put<BillResponse>(`/bill/${id}/settle`, { paymentMethod });
+      return data.data.bill;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bills"] });
+      queryClient.invalidateQueries({ queryKey: ["diningTables"] });
     },
   });
 };
@@ -62,6 +116,7 @@ export const useDeleteBill = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bills"] });
+      queryClient.invalidateQueries({ queryKey: ["diningTables"] });
     },
   });
 };

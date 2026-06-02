@@ -18,10 +18,20 @@ import Customers from "./pages/Customers";
 import Billing from "./pages/Billing";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import ManageUsers from "./pages/ManageUsers";
+import ManageStores from "./pages/ManageStores";
+import ManageTables from "./pages/ManageTables";
+import AddProduct from "./pages/AddProduct";
+import ProductWiseReport from "./pages/ProductWiseReport";
+import TotalStoreWiseReport from "./pages/TotalStoreWiseReport";
+import CompanyInfo from "./pages/CompanyInfo";
 import StockHistoryPage from "./pages/screen";
 import SupplierPage from "./pages/Supplier";
 import PurchasePage from "./pages/Purchase";
 import Permissions from "./pages/Permissions";
+import Profile from "./pages/Profile";
+import Category from "./pages/Category";
+import AddUser from "./pages/AddUser";
 
 // Layout for authenticated pages
 const AppLayout = ({
@@ -141,14 +151,40 @@ function App() {
           }
         />
         <Route
-          path="/reports"
+          path="/reports/product-wise"
           element={
             <ProtectedRoute>
               <AppLayout
                 isMobileOpen={isMobileOpen}
                 setIsMobileOpen={setIsMobileOpen}
               >
-                <Analytics />
+                <ProductWiseReport />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/store-wise"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <TotalStoreWiseReport />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company-info"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <CompanyInfo />
               </AppLayout>
             </ProtectedRoute>
           }
@@ -214,6 +250,104 @@ function App() {
                 setIsMobileOpen={setIsMobileOpen}
               >
                 <Permissions />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <Profile />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/category"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <Category />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/add-user"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <AddUser />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manage-users"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <ManageUsers />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manage-stores"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <ManageStores />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manage-tables"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <ManageTables />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/add-product"
+          element={
+            <ProtectedRoute>
+              <AppLayout
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              >
+                <AddProduct />
               </AppLayout>
             </ProtectedRoute>
           }

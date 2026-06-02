@@ -15,1205 +15,1046 @@ import {
   Wallet,
   ShoppingBag,
   Sparkles,
+  Utensils,
+  Phone,
+  Printer,
+  Settings,
+  Bell,
+  RefreshCw,
+  X,
+  CheckCircle,
+  Clock,
+  HelpCircle,
+  Split,
+  ChevronDown
 } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import Input from "../../components/Input";
 import { useTheme } from "../../context/ThemeContext";
 import { useProducts, type Product } from "../../config/hooks/useProduct";
-
-
+import { useCustomers } from "../../config/hooks/useCustomer";
+import { useDiningTables } from "../../config/hooks/useDiningTable";
+import {
+  useCreateBill,
+  useBills,
+  useUpdateKOTStatus,
+  useSettleBill,
+  type Bill
+} from "../../config/hooks/useBill";
 
 const POSScreen: React.FC = () => {
-  const [cart, setCart] = useState<
-    {
-      id: string | number;
-      name: string;
-      price: number;
-      qty: number;
-      image?: string;
-      color?: string;
-    }[]
-  >([]);
+  const { theme, colors } = useTheme();
+  const [activeTab, setActiveTab] = useState<"order" | "kot">("order");
+  
+  // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<
-    "cash" | "card" | "online"
-  >("card");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [kotSearchQuery, setKotSearchQuery] = useState("");
+  
+  // POS Order State
+  const [orderType, setOrderType] = useState<"DINE_IN" | "DELIVERY" | "PICK_UP">("DINE_IN");
+  const [selectedTableId, setSelectedTableId] = useState<string>("");
+  const [guestsCount, setGuestsCount] = useState<number>(1);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [cart, setCart] = useState<{ id: string; name: string; price: number; qty: number }[]>([]);
+  
+  // Toggles & Options
+  const [isBogo, setIsBogo] = useState(false);
+  const [isComplimentary, setIsComplimentary] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "UPI" | "OTHER">("CASH");
+  const [isPaidChecked, setIsPaidChecked] = useState(true);
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  // Time ticks for KOT timers
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const timer = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const isMobile = windowWidth < 768;
-  const isTablet = windowWidth < 1200;
+  // Fetching Data from API
+  const { data: products = [], isLoading: productsLoading } = useProducts();
+  const { data: customers = [] } = useCustomers();
+  const { data: tables = [], isLoading: tablesLoading } = useDiningTables();
+  
+  // Fetch active pending orders for KOT view
+  const { data: pendingBills = [], refetch: refetchBills } = useBills({ billStatus: "PENDING" });
 
-  const { data: backendProducts, isLoading } = useProducts();
-  const productsList = backendProducts || [];
+  // Mutations
+  const createBillMutation = useCreateBill();
+  const updateKOTStatusMutation = useUpdateKOTStatus();
+  const settleBillMutation = useSettleBill();
 
+  // Reset order details
+  const handleResetOrder = () => {
+    setCart([]);
+    setSelectedTableId("");
+    setGuestsCount(1);
+    setSelectedCustomerId("");
+    setIsBogo(false);
+    setIsComplimentary(false);
+    setActiveTab("order");
+  };
+
+  // Categories loading
   const categories = useMemo(() => {
-    const cats = new Set(productsList.map((p) => p.category));
+    const cats = new Set(products.map((p) => p.category));
     return ["All", ...Array.from(cats)];
-  }, [productsList]);
+  }, [products]);
 
+  // Filtered Dishes Grid
   const filteredProducts = useMemo(() => {
-    return productsList.filter(
+    return products.filter(
       (p) =>
         (activeCategory === "All" || p.category === activeCategory) &&
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        p.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, activeCategory, productsList]);
+  }, [searchQuery, activeCategory, products]);
 
+  // Cart operations
   const addToCart = (product: Product) => {
     const existing = cart.find((item) => item.id === product.id);
     if (existing) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item,
-        ),
-      );
+      setCart(cart.map((item) => (item.id === product.id ? { ...item, qty: item.qty + 1 } : item)));
     } else {
-      setCart([
-        ...cart,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          qty: 1,
-          image: (product as any).image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80",
-          color: (product as any).color || colors.primaryDark,
-        },
-      ]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1 }]);
     }
   };
 
-  const updateQty = (id: string | number, delta: number) => {
+  const updateQty = (id: string, delta: number) => {
     setCart(
-      cart.map((item) => {
-        if (item.id === id) {
-          const newQty = Math.max(1, item.qty + delta);
-          return { ...item, qty: newQty };
-        }
-        return item;
-      }),
+      cart
+        .map((item) => (item.id === id ? { ...item, qty: item.qty + delta } : item))
+        .filter((item) => item.qty > 0)
     );
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const removeFromCart = (id: string) => {
+    setCart(cart.filter((item) => item.id !== id));
+  };
 
-  const { theme, colors } = useTheme();
+  // Pricing calculations
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const discount = isComplimentary ? subtotal : isBogo ? (cart.length > 0 ? Math.min(...cart.map(i => i.price)) : 0) : 0;
+  const taxableAmount = Math.max(0, subtotal - discount);
+  const tax = taxableAmount * 0.05; // 5% GST for restaurants
+  const totalAmount = taxableAmount + tax;
+
+  // Handle Send to Kitchen (KOT)
+  const handleSendKOT = async (print = false) => {
+    if (cart.length === 0) {
+      alert("Please select dishes first.");
+      return;
+    }
+    if (orderType === "DINE_IN" && !selectedTableId) {
+      alert("Please select a dining table.");
+      return;
+    }
+
+    try {
+      await createBillMutation.mutateAsync({
+        customerId: selectedCustomerId || null,
+        totalAmount,
+        paymentMethod,
+        orderType,
+        tableId: selectedTableId || null,
+        guestsCount,
+        billStatus: "PENDING",
+        kotStatus: "PENDING",
+        isBogo,
+        isComplimentary,
+        items: cart.map((item) => ({
+          productId: item.id,
+          quantity: item.qty,
+          price: item.price
+        }))
+      });
+      
+      alert(print ? "KOT Sent and Ticket Printed Successfully!" : "KOT Sent to Kitchen Successfully!");
+      handleResetOrder();
+      refetchBills();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit KOT. Ensure database is updated.");
+    }
+  };
+
+  // Handle Save & Settle payment
+  const handleSaveAndSettle = async (printReceipt = false) => {
+    if (cart.length === 0) {
+      alert("Please select dishes first.");
+      return;
+    }
+    if (orderType === "DINE_IN" && !selectedTableId) {
+      alert("Please select a dining table.");
+      return;
+    }
+
+    try {
+      // 1. Create order as PENDING first (or settled directly if paid)
+      const bill = await createBillMutation.mutateAsync({
+        customerId: selectedCustomerId || null,
+        totalAmount,
+        paymentMethod,
+        orderType,
+        tableId: selectedTableId || null,
+        guestsCount,
+        billStatus: isPaidChecked ? "PAID" : "PENDING",
+        kotStatus: "SERVED",
+        isBogo,
+        isComplimentary,
+        items: cart.map((item) => ({
+          productId: item.id,
+          quantity: item.qty,
+          price: item.price
+        }))
+      });
+
+      // 2. If checkout is paid, settle it immediately to free table
+      if (isPaidChecked && bill) {
+        await settleBillMutation.mutateAsync({
+          id: bill.id,
+          paymentMethod
+        });
+      }
+
+      alert(printReceipt ? "Receipt Generated and Printed Successfully!" : "Order Checked Out Successfully!");
+      handleResetOrder();
+      refetchBills();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to checkout order.");
+    }
+  };
+
+  // Handle Kitchen Order Updates
+  const handleKitchenReady = async (billId: string) => {
+    try {
+      await updateKOTStatusMutation.mutateAsync({ id: billId, status: "READY" });
+      refetchBills();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update KOT status.");
+    }
+  };
+
+  const handleCancelKOT = async (billId: string) => {
+    if (window.confirm("Are you sure you want to cancel this kitchen order?")) {
+      try {
+        await updateKOTStatusMutation.mutateAsync({ id: billId, status: "CANCELLED" });
+        refetchBills();
+      } catch (error) {
+        console.error(error);
+        alert("Failed to cancel KOT.");
+      }
+    }
+  };
+
+  // Filter KOT board list
+  const filteredKOTs = useMemo(() => {
+    return pendingBills.filter((bill) => {
+      const matchSearch = bill.kotNo?.includes(kotSearchQuery) || 
+        bill.table?.tableName.toLowerCase().includes(kotSearchQuery.toLowerCase()) ||
+        bill.id.substring(bill.id.length - 4).includes(kotSearchQuery);
+      return matchSearch;
+    });
+  }, [pendingBills, kotSearchQuery]);
+
+  // Helper: format elapsed kitchen prep time
+  const getElapsedTime = (createdAtStr: string) => {
+    const elapsedMs = new Date().getTime() - new Date(createdAtStr).getTime();
+    const totalSecs = Math.floor(elapsedMs / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const styles = {
-    screenContainer: {
-      display: "grid",
-      gridTemplateColumns: isTablet ? "1fr" : "1fr 420px",
-      height: isTablet ? "auto" : "calc(100vh - 100px)",
-      gap: "24px",
-      animation: "fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-    },
-    leftPanel: {
+    appContainer: {
       display: "flex",
       flexDirection: "column" as const,
-      gap: "28px",
-      overflowY: isTablet ? ("visible" as const) : ("auto" as const),
-      paddingRight: isTablet ? 0 : "8px",
+      height: "calc(100vh - 120px)",
+      gap: "16px",
+      fontFamily: "system-ui, -apple-system, sans-serif"
     },
-    rightPanel: {
-      backgroundColor:
-        theme === "light"
-          ? "rgba(255, 255, 255, 0.7)"
-          : "rgba(30, 41, 59, 0.7)",
-      backdropFilter: "blur(20px)",
-      WebkitBackdropFilter: "blur(20px)",
-      borderRadius: "32px",
-      border: `1px solid ${theme === "light" ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.05)"}`,
+    // Header Style
+    header: {
       display: "flex",
-      flexDirection: "column" as const,
-      boxShadow:
-        theme === "light"
-          ? "0 20px 40px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255,255,255,1)"
-          : "0 20px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
-      position: isTablet ? ("static" as const) : ("sticky" as const),
-      top: "80px",
-      height: isTablet ? "auto" : "100%",
-      overflow: "hidden",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: "#1e293b",
+      padding: "12px 24px",
+      borderRadius: "18px",
+      color: "white",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
     },
-    productCard: {
-      backgroundColor: colors.card,
-      borderRadius: "24px",
-      border: `1px solid ${colors.border}`,
-      padding: "12px",
-      cursor: "pointer",
-      transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-      display: "flex",
-      flexDirection: "column" as const,
-      position: "relative" as const,
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)",
-    },
-    cartItem: {
+    logoSection: {
       display: "flex",
       alignItems: "center",
-      gap: "14px",
-      padding: "12px",
-      borderRadius: "20px",
-      backgroundColor:
-        theme === "light"
-          ? "rgba(255, 255, 255, 0.9)"
-          : "rgba(15, 23, 42, 0.6)",
-      marginBottom: "12px",
-      border: `1px solid ${theme === "light" ? "rgba(226, 232, 240, 0.6)" : "rgba(255, 255, 255, 0.05)"}`,
-      transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+      gap: "16px"
     },
-    paymentBtn: (active: boolean) => ({
-      flex: 1,
+    logo: {
+      fontSize: "24px",
+      fontWeight: 900,
+      color: "#f97316", // Reddish Orange
+      letterSpacing: "-0.5px",
+      margin: 0
+    },
+    newOrderBtn: {
+      backgroundColor: "#ef4444",
+      color: "white",
+      border: "none",
+      borderRadius: "8px",
+      padding: "8px 16px",
+      fontWeight: 700,
+      cursor: "pointer",
+      boxShadow: "0 4px 6px -1px rgba(239, 68, 68, 0.4)",
+      transition: "background 0.2s"
+    },
+    searchBillInput: {
+      backgroundColor: "#334155",
+      border: "none",
+      borderRadius: "8px",
+      padding: "8px 12px",
+      color: "white",
+      fontSize: "13px",
+      outline: "none",
+      width: "120px"
+    },
+    supportBox: {
       display: "flex",
-      flexDirection: "column" as const,
       alignItems: "center",
       gap: "8px",
-      padding: "16px 8px",
-      borderRadius: "20px",
-      border: active
-        ? `2px solid ${colors.primaryDark}`
-        : `2px solid transparent`,
-      backgroundColor: active
-        ? theme === "dark"
-          ? "rgba(79, 70, 229, 0.15)"
-          : "rgba(79, 70, 229, 0.05)"
-        : theme === "light"
-          ? "#f1f5f9"
-          : "rgba(255,255,255,0.03)",
-      color: active ? colors.primaryDark : colors.textMuted,
+      backgroundColor: "rgba(255,255,255,0.06)",
+      padding: "6px 14px",
+      borderRadius: "10px",
+      border: "1px solid rgba(255,255,255,0.1)",
+      fontSize: "13px"
+    },
+    supportPhone: {
+      fontWeight: 700,
+      color: "#38bdf8"
+    },
+    headerIconBtn: {
+      backgroundColor: "transparent",
+      border: "none",
+      color: "#94a3b8",
       cursor: "pointer",
-      transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+      padding: "8px",
+      borderRadius: "8px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "all 0.2s"
+    },
+    // Tabs Navigation
+    tabRow: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      padding: "4px",
+      borderRadius: "12px",
+      border: `1px solid ${colors.border}`
+    },
+    tabButton: (active: boolean) => ({
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "8px",
+      padding: "12px",
+      borderRadius: "10px",
+      border: "none",
+      backgroundColor: active ? (theme === "light" ? "#f1f5f9" : "#334155") : "transparent",
+      color: active ? colors.primary : colors.textMuted,
+      fontWeight: 700,
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "all 0.2s"
+    }),
+    backButton: {
+      padding: "10px 20px",
+      borderRadius: "10px",
+      border: `1px solid ${colors.border}`,
+      backgroundColor: colors.bg,
+      color: colors.textMain,
+      fontWeight: 700,
+      cursor: "pointer"
+    },
+    // Grid Container
+    posBody: {
+      display: "grid",
+      gridTemplateColumns: "220px 1fr 400px",
+      gap: "16px",
+      flex: 1,
+      minHeight: 0
+    },
+    sidebarMenu: {
+      backgroundColor: colors.card,
+      borderRadius: "16px",
+      border: `1px solid ${colors.border}`,
+      display: "flex",
+      flexDirection: "column" as const,
+      padding: "12px",
+      overflowY: "auto" as const,
+      gap: "6px"
+    },
+    categoryBtn: (active: boolean) => ({
+      width: "100%",
+      textAlign: "left" as const,
+      padding: "12px 16px",
+      borderRadius: "10px",
+      border: "none",
+      backgroundColor: active ? colors.primary : "transparent",
+      color: active ? "white" : colors.textMain,
+      fontWeight: active ? 700 : 500,
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "all 0.2s"
+    }),
+    dishesContainer: {
+      display: "flex",
+      flexDirection: "column" as const,
+      gap: "16px",
+      minWidth: 0
+    },
+    dishesGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+      gap: "12px",
+      overflowY: "auto" as const,
+      flex: 1
+    },
+    dishCard: {
+      backgroundColor: colors.card,
+      borderRadius: "14px",
+      border: `1.5px solid ${colors.border}`,
+      padding: "16px",
+      cursor: "pointer",
+      display: "flex",
+      flexDirection: "column" as const,
+      justifyContent: "space-between",
+      height: "100px",
+      transition: "all 0.2s",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
+    },
+    checkoutPanel: {
+      backgroundColor: colors.card,
+      borderRadius: "18px",
+      border: `1px solid ${colors.border}`,
+      display: "flex",
+      flexDirection: "column" as const,
+      overflow: "hidden"
+    },
+    orderTypeRow: {
+      display: "flex",
+      borderBottom: `1px solid ${colors.border}`
+    },
+    orderTypeTab: (active: boolean) => ({
+      flex: 1,
+      padding: "14px 6px",
+      textAlign: "center" as const,
+      border: "none",
+      backgroundColor: active ? "#f97316" : "transparent",
+      color: active ? "white" : colors.textMuted,
       fontWeight: 800,
       fontSize: "12px",
-      boxShadow: active ? `0 8px 16px -4px ${colors.primaryDark}30` : "none",
+      cursor: "pointer",
+      transition: "all 0.2s"
     }),
+    // KOT View styles
+    kotLegendBar: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      padding: "12px 20px",
+      borderRadius: "12px",
+      border: `1px solid ${colors.border}`
+    },
+    legendIndicator: (color: string) => ({
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      fontSize: "12px",
+      fontWeight: 700,
+      color: colors.textMuted
+    }),
+    legendDot: (color: string) => ({
+      width: "12px",
+      height: "12px",
+      borderRadius: "50%",
+      backgroundColor: color
+    }),
+    kotGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+      gap: "16px",
+      overflowY: "auto" as const,
+      flex: 1
+    },
+    kotCard: {
+      backgroundColor: colors.card,
+      borderRadius: "16px",
+      border: `1px solid ${colors.border}`,
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+      display: "flex",
+      flexDirection: "column" as const,
+      overflow: "hidden",
+      height: "fit-content"
+    },
+    kotHeader: (type: "DINE_IN" | "DELIVERY" | "PICK_UP") => {
+      const bg = type === "DINE_IN" ? "#eab308" : type === "DELIVERY" ? "#f97316" : "#3b82f6";
+      return {
+        backgroundColor: bg,
+        color: "white",
+        padding: "10px 16px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      };
+    },
+    kotItemRow: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "10px 16px",
+      borderBottom: `1px solid ${colors.border}`,
+      fontSize: "14px",
+      fontWeight: 600,
+      color: colors.textMain
+    }
   };
 
   return (
-    <div style={styles.screenContainer}>
-      {/* Products & Discovery */}
-      <div style={styles.leftPanel} className="custom-scrollbar">
-        {/* Header Bar */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            justifyContent: "space-between",
-            alignItems: isMobile ? "flex-start" : "center",
-            gap: "24px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            <div style={{ position: "relative" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "20px",
-                  backgroundColor: colors.primaryDark,
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: `0 12px 24px -6px ${colors.primaryDark}60`,
-                  zIndex: 2,
-                  position: "relative",
-                }}
-              >
-                <Monitor size={32} strokeWidth={2.5} />
-              </div>
-              <div
-                className="pulse-ring"
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "20px",
-                  backgroundColor: colors.primaryDark,
-                  zIndex: 1,
-                }}
-              ></div>
-            </div>
-            <div>
-              <h1
-                style={{
-                  fontSize: "32px",
-                  fontWeight: 900,
-                  color: colors.textMain,
-                  letterSpacing: "-0.03em",
-                  margin: "0 0 4px 0",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                Terminal <span style={{ color: colors.primaryDark }}>Pro</span>
-                <Sparkles
-                  size={20}
-                  style={{ color: "#f59e0b" }}
-                  className="spin-slow"
-                />
-              </h1>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#10b981",
-                    boxShadow: "0 0 8px #10b981",
-                  }}
-                ></div>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: colors.textMuted,
-                    fontWeight: 700,
-                    margin: 0,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Global Distribution Sync
-                </p>
-              </div>
-            </div>
-          </div>
-          <div style={{ width: isMobile ? "100%" : "380px" }}>
-            <Input
-              leftIcon={<Search size={20} strokeWidth={2.5} />}
-              placeholder="Search products, brands, or SKU..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                borderRadius: "20px",
-                height: "60px",
-                fontSize: "15px",
-                fontWeight: 600,
-                backgroundColor: colors.input,
-                borderColor: colors.border,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
-              }}
+    <div style={styles.appContainer}>
+      
+      {/* Top Header Section */}
+      <div style={styles.header}>
+        <div style={styles.logoSection}>
+          <h1 style={styles.logo}>Petpooja</h1>
+          <button style={styles.newOrderBtn} onClick={handleResetOrder}>New Order</button>
+          <div>
+            <input 
+              style={styles.searchBillInput} 
+              placeholder="Q Bill No" 
+              value={kotSearchQuery}
+              onChange={(e) => setKotSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Categories Bar */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "12px",
-            paddingBottom: "8px",
-          }}
-          className="custom-scrollbar"
-        >
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="cat-btn"
-              style={{
-                padding: "12px 24px",
-                borderRadius: "16px",
-                backgroundColor:
-                  activeCategory === cat ? colors.primaryDark : colors.card,
-                color: activeCategory === cat ? "white" : colors.textMuted,
-                fontWeight: 800,
-                fontSize: "14px",
-                cursor: "pointer",
-                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                border:
-                  activeCategory === cat
-                    ? "1px solid transparent"
-                    : `1px solid ${colors.border}`,
-                boxShadow:
-                  activeCategory === cat
-                    ? `0 8px 16px -4px ${colors.primaryDark}40`
-                    : "0 2px 4px rgba(0,0,0,0.02)",
-              }}
-            >
-              {cat}
-            </button>
-          ))}
+        <div style={styles.supportBox}>
+          <Phone size={14} style={{ color: "#38bdf8" }} />
+          <span>Call For Support:</span>
+          <span style={styles.supportPhone}>9099912483</span>
         </div>
 
-        {/* Product Grid */}
-        {isLoading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
-            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "1fr"
-                : isTablet
-                  ? "1fr 1fr"
-                  : "1fr 1fr 1fr",
-              gap: "24px",
-            }}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button style={styles.headerIconBtn}><Printer size={18} /></button>
+          <button style={styles.headerIconBtn}><Settings size={18} /></button>
+          <button style={styles.headerIconBtn}><Bell size={18} /></button>
+          <button 
+            style={{ ...styles.headerIconBtn, color: "#ef4444" }}
+            onClick={() => { localStorage.removeItem("token"); window.location.href = "/login"; }}
           >
-            {filteredProducts.map((product, index) => {
-              const productImage = (product as any).image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80";
-              const productColor = (product as any).color || colors.primaryDark;
-              
-              return (
-                <div
-                  key={product.id}
-                  style={{
-                    ...styles.productCard,
-                    animationDelay: `${index * 0.05}s`,
-                  }}
-                  className="pos-card fade-in-up"
-                  onClick={() => addToCart(product)}
-                >
-                  <div
-                    style={{
-                      height: "180px",
-                      width: "100%",
-                      position: "relative",
-                      overflow: "hidden",
-                      borderRadius: "16px",
-                      backgroundColor: theme === "light" ? "#f1f5f9" : "#1e293b",
-                    }}
-                  >
-                    <img
-                      src={productImage}
-                      alt={product.name}
-                      className="product-img"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transition: "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background:
-                          "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%)",
-                        opacity: 0.8,
-                        transition: "opacity 0.3s ease",
-                      }}
-                      className="img-overlay"
-                    />
-
-                    {/* Badges overlaid on image */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "12px",
-                        left: "12px",
-                        right: "12px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "10px",
-                          backgroundColor: "rgba(255,255,255,0.9)",
-                          color: productColor,
-                          display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    <Package size={18} strokeWidth={2.5} />
-                  </div>
-                  <Badge
-                    variant={product.stock > 10 ? "neutral" : "warning"}
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 800,
-                      padding: "6px 10px",
-                      borderRadius: "10px",
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      color: product.stock > 10 ? "#0f172a" : "#d97706",
-                      border: "none",
-                      backdropFilter: "blur(4px)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    {product.stock} Left
-                  </Badge>
-                </div>
-
-                {/* Quick Add Button that slides up on hover */}
-                <div
-                  className="quick-add"
-                  style={{
-                    position: "absolute",
-                    bottom: "16px",
-                    left: "16px",
-                    right: "16px",
-                    transform: "translateY(150%)",
-                    transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      backgroundColor: productColor,
-                      color: "white",
-                      padding: "8px 16px",
-                      borderRadius: "12px",
-                      fontWeight: 800,
-                      fontSize: "12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      boxShadow: `0 8px 16px ${productColor}60`,
-                    }}
-                  >
-                    <ShoppingCart size={14} strokeWidth={3} />
-                    QUICK ADD
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ padding: "16px 8px 8px 8px" }}>
-                <p
-                  style={{
-                    fontSize: "11px",
-                    color: productColor,
-                    fontWeight: 900,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    marginBottom: "6px",
-                  }}
-                >
-                  {product.category}
-                </p>
-                <h3
-                  style={{
-                    fontSize: "17px",
-                    fontWeight: 800,
-                    color: colors.textMain,
-                    margin: "0 0 16px 0",
-                    lineHeight: 1.3,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {product.name}
-                </h3>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-end",
-                  }}
-                >
-                  <div>
-                    <p
-                      style={{
-                        fontSize: "10px",
-                        color: colors.textMuted,
-                        fontWeight: 700,
-                        margin: "0 0 2px 0",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      Unit Price
-                    </p>
-                    <span
-                      style={{
-                        fontSize: "22px",
-                        fontWeight: 900,
-                        color: colors.textMain,
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      ${product.price.toLocaleString()}
-                    </span>
-                  </div>
-                  <button
-                    className="add-btn"
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "12px",
-                      backgroundColor:
-                        theme === "light"
-                          ? "#f1f5f9"
-                          : "rgba(255,255,255,0.05)",
-                      color: colors.textMain,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                    }}
-                  >
-                    <Plus size={20} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            <X size={18} />
+          </button>
         </div>
-        )}
       </div>
 
-      {/* Cart & Checkout */}
-      <div style={styles.rightPanel}>
-        <div
-          style={{
-            padding: "28px",
-            borderBottom: `1px solid ${theme === "light" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"}`,
-            backgroundColor: "transparent",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+      {/* View Switch Tabs */}
+      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <div style={{ ...styles.tabRow, flex: 1 }}>
+          <button 
+            style={styles.tabButton(activeTab === "order")} 
+            onClick={() => setActiveTab("order")}
           >
-            <div>
-              <h2
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 900,
-                  color: colors.textMain,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  margin: 0,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    backgroundColor:
-                      theme === "light" ? "#f1f5f9" : "rgba(255,255,255,0.05)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ShoppingBag
-                    size={20}
-                    style={{ color: colors.primaryDark }}
-                    strokeWidth={2.5}
-                  />
-                </div>
-                Current Order
-              </h2>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginTop: "6px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    backgroundColor: colors.textMuted,
-                  }}
-                ></span>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: colors.textMuted,
-                    fontWeight: 700,
-                    margin: 0,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  INV-2024-8842
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setCart([])}
-              className="clear-cart-btn"
-              style={{
-                padding: "10px",
-                borderRadius: "12px",
-                border: "none",
-                backgroundColor: "transparent",
-                color: colors.textMuted,
-                cursor: "pointer",
-                display: "flex",
-                transition: "all 0.2s",
-              }}
+            <ShoppingCart size={16} /> Order View
+          </button>
+          <button 
+            style={styles.tabButton(activeTab === "kot")} 
+            onClick={() => setActiveTab("kot")}
+          >
+            <Utensils size={16} /> Kot View
+          </button>
+        </div>
+        <button style={styles.backButton} onClick={() => window.history.back()}>Back</button>
+      </div>
+
+      {/* Main Content Area */}
+      {activeTab === "order" ? (
+        <div style={styles.posBody}>
+          
+          {/* 1. Left Categories Menu */}
+          <div style={styles.sidebarMenu}>
+            <button 
+              style={styles.categoryBtn(activeCategory === "All")}
+              onClick={() => setActiveCategory("All")}
             >
-              <Trash2 size={20} strokeWidth={2} />
+              All Items
             </button>
+            {categories.filter(c => c !== "All").map((cat) => (
+              <button 
+                key={cat}
+                style={styles.categoryBtn(activeCategory === cat)}
+                onClick={() => setActiveCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
-          <div
-            className="customer-row"
-            style={{
-              marginTop: "24px",
-              padding: "14px",
-              borderRadius: "16px",
-              backgroundColor: theme === "light" ? "white" : "rgba(0,0,0,0.2)",
-              border: `1px dashed ${colors.border}`,
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-            }}
-          >
-            <div
-              style={{
-                width: "42px",
-                height: "42px",
-                flexShrink: 0,
-                borderRadius: "12px",
-                backgroundColor: colors.primaryDark,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                boxShadow: `0 4px 12px ${colors.primaryDark}40`,
-              }}
-            >
-              <User size={20} strokeWidth={2.5} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 800,
+          {/* 2. Middle Dishes Grid */}
+          <div style={styles.dishesContainer}>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ flex: 1 }}>
+                <Input 
+                  leftIcon={<Search size={18} />} 
+                  placeholder="Search item..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ borderRadius: "10px", height: "46px" }}
+                />
+              </div>
+              <input 
+                placeholder="Short Code"
+                style={{ 
+                  width: "120px", 
+                  borderRadius: "10px", 
+                  border: `1.5px solid ${colors.border}`, 
+                  backgroundColor: colors.card,
+                  padding: "0 12px",
                   color: colors.textMain,
-                  margin: "0 0 2px 0",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                Walk-in Customer
-              </p>
-              <p
-                style={{
-                  fontSize: "11px",
-                  color: colors.textMuted,
+                  fontSize: "14px",
                   fontWeight: 600,
-                  margin: 0,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  outline: "none"
                 }}
-              >
-                Quick Checkout Mode
-              </p>
+              />
             </div>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                flexShrink: 0,
-                borderRadius: "8px",
-                backgroundColor:
-                  theme === "light" ? "#f1f5f9" : "rgba(255,255,255,0.05)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginLeft: "auto",
-              }}
-            >
-              <ChevronRight
-                size={16}
-                style={{ color: colors.textMuted }}
-                strokeWidth={2.5}
+
+            {productsLoading ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+                <RefreshCw size={24} className="animate-spin" style={{ color: colors.primary }} />
+              </div>
+            ) : (
+              <div style={styles.dishesGrid}>
+                {filteredProducts.map((dish) => (
+                  <div 
+                    key={dish.id} 
+                    style={styles.dishCard}
+                    onClick={() => addToCart(dish)}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.primary; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; }}
+                  >
+                    <h4 style={{ margin: "0 0 6px 0", fontSize: "14px", fontWeight: 700, color: colors.textMain, lineHeight: 1.3 }}>{dish.name}</h4>
+                    <span style={{ fontSize: "16px", fontWeight: 900, color: colors.primary }}>${dish.price.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Right POS Checkout cart */}
+          <div style={styles.checkoutPanel}>
+            
+            {/* Dine In / Delivery Selector */}
+            <div style={styles.orderTypeRow}>
+              {(["DINE_IN", "DELIVERY", "PICK_UP"] as const).map((type) => (
+                <button 
+                  key={type}
+                  style={styles.orderTypeTab(orderType === type)}
+                  onClick={() => { setOrderType(type); if(type !== "DINE_IN") setSelectedTableId(""); }}
+                >
+                  {type.replace("_", " ")}
+                </button>
+              ))}
+            </div>
+
+            {/* Table / Guest selector */}
+            <div style={{ padding: "14px", borderBottom: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {orderType === "DINE_IN" && (
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <div style={{ flex: 1, position: "relative" }}>
+                    <select
+                      value={selectedTableId}
+                      onChange={(e) => setSelectedTableId(e.target.value)}
+                      style={{ 
+                        width: "100%", 
+                        padding: "10px", 
+                        borderRadius: "10px", 
+                        border: `1.5px solid ${colors.border}`, 
+                        backgroundColor: colors.bg,
+                        color: colors.textMain,
+                        fontWeight: 700,
+                        outline: "none",
+                        appearance: "none"
+                      }}
+                    >
+                      <option value="">Select Table</option>
+                      {tables.map(t => (
+                        <option key={t.id} value={t.id} style={{ color: t.available ? colors.success : colors.danger }}>
+                          {t.tableName} ({t.capacity} pax) - {t.available ? "Free" : "Occupied"}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: colors.textMuted }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", backgroundColor: colors.bg, padding: "4px 10px", borderRadius: "10px", border: `1.5px solid ${colors.border}` }}>
+                    <User size={16} style={{ color: colors.textMuted }} />
+                    <input 
+                      type="number"
+                      min={1}
+                      max={12}
+                      value={guestsCount}
+                      onChange={(e) => setGuestsCount(Math.max(1, Number(e.target.value)))}
+                      style={{ width: "36px", border: "none", backgroundColor: "transparent", textAlign: "center", fontWeight: 700, color: colors.textMain, outline: "none" }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Customer search select */}
+              <div style={{ position: "relative" }}>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  style={{ 
+                    width: "100%", 
+                    padding: "10px", 
+                    borderRadius: "10px", 
+                    border: `1.5px solid ${colors.border}`, 
+                    backgroundColor: colors.bg,
+                    color: colors.textMain,
+                    fontWeight: 700,
+                    outline: "none",
+                    appearance: "none"
+                  }}
+                >
+                  <option value="">Walk-in Customer</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: colors.textMuted }} />
+              </div>
+            </div>
+
+            {/* Cart Table List */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+              {cart.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.35, color: colors.textMuted }}>
+                  <Utensils size={40} style={{ marginBottom: "12px" }} />
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: "14px" }}>No Item Selected</p>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "11px" }}>Please Select Item from Left Menu Item</p>
+                </div>
+              ) : (
+                cart.map((item) => (
+                  <div 
+                    key={item.id} 
+                    style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "space-between", 
+                      padding: "8px 10px", 
+                      borderBottom: `1.5px solid ${colors.border}`,
+                      backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255,255,255,0.02)",
+                      borderRadius: "10px",
+                      marginBottom: "6px"
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: "13px", color: colors.textMain, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
+                      <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: 600 }}>${item.price.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: colors.card, border: `1px solid ${colors.border}`, borderRadius: "8px", padding: "2px" }}>
+                      <button onClick={() => updateQty(item.id, -1)} style={{ border: "none", backgroundColor: "transparent", cursor: "pointer", color: colors.textMuted }}><Minus size={12} /></button>
+                      <span style={{ fontWeight: 800, fontSize: "13px", color: colors.textMain, width: "16px", textAlign: "center" }}>{item.qty}</span>
+                      <button onClick={() => updateQty(item.id, 1)} style={{ border: "none", backgroundColor: "transparent", cursor: "pointer", color: colors.textMuted }}><Plus size={12} /></button>
+                    </div>
+                    <div style={{ width: "60px", textAlign: "right" }}>
+                      <span style={{ fontWeight: 800, fontSize: "13px", color: colors.textMain }}>${(item.price * item.qty).toFixed(2)}</span>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} style={{ border: "none", backgroundColor: "transparent", color: "#f43f5e", cursor: "pointer", paddingLeft: "8px" }}><Trash2 size={14} /></button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Bill Pricing breakdown */}
+            <div style={{ padding: "14px", borderTop: `1px solid ${colors.border}`, backgroundColor: theme === "light" ? "#f8fafc" : "rgba(255,255,255,0.01)" }}>
+              
+              {/* Restaurant Special Buttons */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <button 
+                  style={{ 
+                    flex: 1, 
+                    border: isBogo ? "2px solid #f97316" : `1px solid ${colors.border}`,
+                    borderRadius: "8px", 
+                    backgroundColor: isBogo ? "rgba(249,115,22,0.1)" : colors.card,
+                    color: isBogo ? "#f97316" : colors.textMuted,
+                    padding: "8px 4px", 
+                    fontSize: "11px", 
+                    fontWeight: 800,
+                    cursor: "pointer"
+                  }}
+                  onClick={() => { setIsBogo(!isBogo); if(isComplimentary) setIsComplimentary(false); }}
+                >
+                  Bogo Offer
+                </button>
+                <button 
+                  style={{ 
+                    flex: 1, 
+                    border: `1px solid ${colors.border}`, 
+                    borderRadius: "8px", 
+                    backgroundColor: colors.card,
+                    color: colors.textMuted,
+                    padding: "8px 4px", 
+                    fontSize: "11px", 
+                    fontWeight: 800,
+                    cursor: "pointer"
+                  }}
+                  onClick={() => alert("Split Bill Protocol Initialized...")}
+                >
+                  Split
+                </button>
+                <button 
+                  style={{ 
+                    flex: 1, 
+                    border: isComplimentary ? "2px solid #10b981" : `1px solid ${colors.border}`,
+                    borderRadius: "8px", 
+                    backgroundColor: isComplimentary ? "rgba(16,185,129,0.1)" : colors.card,
+                    color: isComplimentary ? "#10b981" : colors.textMuted,
+                    padding: "8px 4px", 
+                    fontSize: "11px", 
+                    fontWeight: 800,
+                    cursor: "pointer"
+                  }}
+                  onClick={() => { setIsComplimentary(!isComplimentary); if(isBogo) setIsBogo(false); }}
+                >
+                  Complimentary
+                </button>
+              </div>
+
+              {/* Payment Methods */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "6px", marginBottom: "12px" }}>
+                {(["CASH", "CARD", "UPI", "OTHER"] as const).map(m => (
+                  <button 
+                    key={m} 
+                    style={{ 
+                      padding: "6px", 
+                      fontSize: "10px", 
+                      fontWeight: 800, 
+                      borderRadius: "6px", 
+                      border: paymentMethod === m ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
+                      backgroundColor: paymentMethod === m ? `${colors.primary}10` : colors.card,
+                      color: paymentMethod === m ? colors.primary : colors.textMuted,
+                      cursor: "pointer"
+                    }}
+                    onClick={() => setPaymentMethod(m)}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: colors.textMuted, cursor: "pointer" }}>
+                  <input type="checkbox" checked={isPaidChecked} onChange={(e) => setIsPaidChecked(e.target.checked)} />
+                  Order is Paid
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: colors.textMuted, cursor: "pointer" }}>
+                  <input type="checkbox" defaultChecked />
+                  Send Feedback SMS
+                </label>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, color: colors.textMuted, marginBottom: "4px" }}>
+                <span>Subtotal:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, color: colors.danger, marginBottom: "4px" }}>
+                  <span>Discount:</span>
+                  <span>-${discount.toFixed(2)}</span>
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, color: colors.textMuted, marginBottom: "8px" }}>
+                <span>Tax (5%):</span>
+                <span>${tax.toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", fontWeight: 900, color: colors.textMain }}>
+                <span>Total Payable:</span>
+                <span>${totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div style={{ padding: "12px", borderTop: `1px solid ${colors.border}`, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", backgroundColor: colors.bg }}>
+              <button 
+                style={{ backgroundColor: colors.card, border: `1.5px solid ${colors.border}`, color: colors.textMain, fontWeight: 800, fontSize: "11px", padding: "12px 6px", borderRadius: "10px", cursor: "pointer" }}
+                onClick={() => handleSaveAndSettle(false)}
+              >
+                Save
+              </button>
+              <button 
+                style={{ backgroundColor: "#2563eb", border: "none", color: "white", fontWeight: 800, fontSize: "11px", padding: "12px 6px", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(37, 99, 235, 0.4)" }}
+                onClick={() => handleSaveAndSettle(true)}
+              >
+                Save & Print
+              </button>
+              <button 
+                style={{ backgroundColor: colors.card, border: `1.5px solid ${colors.border}`, color: colors.textMain, fontWeight: 800, fontSize: "11px", padding: "12px 6px", borderRadius: "10px", cursor: "pointer" }}
+                onClick={() => alert("Order held successfully.")}
+              >
+                Hold
+              </button>
+              <button 
+                style={{ gridColumn: "span 2", backgroundColor: "#f97316", border: "none", color: "white", fontWeight: 800, fontSize: "12px", padding: "12px", borderRadius: "10px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(249, 115, 22, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                onClick={() => handleSendKOT(false)}
+              >
+                <Utensils size={14} /> Send KOT
+              </button>
+              <button 
+                style={{ backgroundColor: colors.card, border: `1.5px solid ${colors.border}`, color: colors.textMain, fontWeight: 800, fontSize: "11px", padding: "12px 6px", borderRadius: "10px", cursor: "pointer" }}
+                onClick={() => handleSendKOT(true)}
+              >
+                KOT & Print
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      ) : (
+        
+        // KOT View tab screen (Kitchen Order Ticket Board)
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1, minHeight: 0 }}>
+          
+          {/* Kitchen Ticket Legend & status search */}
+          <div style={styles.kotLegendBar}>
+            <div style={{ display: "flex", gap: "16px" }}>
+              <div style={styles.legendIndicator("Dine In")}>
+                <div style={styles.legendDot("#eab308")} /> Dine In
+              </div>
+              <div style={styles.legendIndicator("Delivery")}>
+                <div style={styles.legendDot("#f97316")} /> Delivery
+              </div>
+              <div style={styles.legendIndicator("Pick Up")}>
+                <div style={styles.legendDot("#3b82f6")} /> Pick Up
+              </div>
+            </div>
+            
+            <div style={{ width: "240px" }}>
+              <Input 
+                leftIcon={<Search size={16} />} 
+                placeholder="Search KOT / Table..." 
+                value={kotSearchQuery}
+                onChange={(e) => setKotSearchQuery(e.target.value)}
+                style={{ borderRadius: "8px", height: "38px", fontSize: "13px" }}
               />
             </div>
           </div>
-        </div>
 
-        <div
-          style={{ flex: 1, overflowY: "auto", padding: "24px" }}
-          className="custom-scrollbar"
-        >
-          {cart.length === 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                opacity: 0.4,
-              }}
-            >
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "24px",
-                  backgroundColor:
-                    theme === "light" ? "#f1f5f9" : "rgba(255,255,255,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: "20px",
-                }}
-              >
-                <ShoppingBag
-                  size={40}
-                  strokeWidth={1.5}
-                  style={{ color: colors.textMuted }}
-                />
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontWeight: 800,
-                  fontSize: "16px",
-                  color: colors.textMain,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                Your cart is empty
-              </p>
-              <p
-                style={{
-                  marginTop: "8px",
-                  fontWeight: 600,
-                  fontSize: "13px",
-                  color: colors.textMuted,
-                }}
-              >
-                Scan or select products to begin
-              </p>
+          {/* Board Grid of Kitchen Tickets */}
+          {filteredKOTs.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, opacity: 0.35, color: colors.textMuted }}>
+              <Utensils size={64} style={{ marginBottom: "16px" }} />
+              <h3 style={{ margin: 0, fontWeight: 800, fontSize: "18px" }}>Kitchen Board Clear</h3>
+              <p style={{ margin: "4px 0 0 0", fontSize: "13px" }}>No active kitchen orders at this moment.</p>
             </div>
           ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
-            >
-              {cart.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="cart-row fade-in-up"
-                  style={{
-                    ...styles.cartItem,
-                    animationDelay: `${index * 0.05}s`,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "56px",
-                      height: "56px",
-                      borderRadius: "14px",
-                      overflow: "hidden",
-                      backgroundColor:
-                        theme === "light" ? "#f1f5f9" : "#1e293b",
-                      flexShrink: 0,
-                      position: "relative",
-                    }}
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "4px",
-                        height: "100%",
-                        backgroundColor: item.color,
-                      }}
-                    ></div>
+            <div style={styles.kotGrid}>
+              {filteredKOTs.map((kot) => (
+                <div key={kot.id} style={styles.kotCard}>
+                  
+                  {/* Yellow/Green/Blue Banner depending on DINE_IN/DELIVERY/PICK_UP */}
+                  <div style={styles.kotHeader(kot.orderType)}>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase" }}>{kot.orderType.replace("_", " ")}</span>
+                      <span style={{ fontSize: "16px", fontWeight: 900 }}>
+                        {kot.orderType === "DINE_IN" ? kot.table?.tableName || "Dine In" : "Take Away"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700 }}>KOT No: {kot.kotNo}</span>
+                      <span style={{ fontSize: "14px", fontWeight: 900, display: "flex", alignItems: "center", gap: "4px" }}>
+                        <Clock size={12} /> {getElapsedTime(kot.createdAt)}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 800,
-                        color: colors.textMain,
-                        margin: "0 0 4px 0",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+
+                  {/* KOT items list */}
+                  <div style={{ flex: 1, padding: "8px 0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 16px", fontSize: "11px", fontWeight: 800, color: colors.textMuted, textTransform: "uppercase", borderBottom: `1px solid ${colors.border}` }}>
+                      <span>Item</span>
+                      <span>Qty</span>
+                    </div>
+                    <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                      {kot.items?.map((item: any) => (
+                        <div key={item.id} style={styles.kotItemRow}>
+                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginRight: "12px" }}>
+                            {item.product?.name || "Dish Item"}
+                          </span>
+                          <span style={{ color: colors.primary, fontWeight: 800 }}>{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* KOT card actions */}
+                  <div style={{ display: "flex", gap: "8px", padding: "12px", borderTop: `1px solid ${colors.border}` }}>
+                    <button 
+                      onClick={() => handleCancelKOT(kot.id)}
+                      style={{ 
+                        width: "42px", 
+                        height: "42px", 
+                        borderRadius: "8px", 
+                        border: `1.5px solid ${colors.border}`, 
+                        backgroundColor: colors.card, 
+                        color: colors.danger, 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        cursor: "pointer" 
                       }}
                     >
-                      {item.name}
-                    </h4>
-                    <p
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 900,
-                        color: colors.textMain,
-                        margin: 0,
-                      }}
-                    >
-                      ${item.price.toLocaleString()}
-                    </p>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      backgroundColor:
-                        theme === "light" ? "white" : "rgba(255,255,255,0.05)",
-                      borderRadius: "12px",
-                      padding: "4px",
-                      border: `1px solid ${colors.border}`,
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
-                    }}
-                  >
-                    <button
-                      onClick={() => updateQty(item.id, -1)}
-                      className="qty-btn"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "8px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        cursor: "pointer",
-                        color: colors.textMuted,
+                      <X size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleKitchenReady(kot.id)}
+                      style={{ 
+                        flex: 1, 
+                        height: "42px", 
+                        borderRadius: "8px", 
+                        border: "none", 
+                        backgroundColor: "#ef4444", 
+                        color: "white", 
+                        fontWeight: 800, 
+                        fontSize: "13px", 
+                        cursor: "pointer", 
+                        boxShadow: "0 4px 6px -1px rgba(239, 68, 68, 0.4)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        transition: "all 0.2s",
+                        gap: "6px"
                       }}
                     >
-                      <Minus size={14} strokeWidth={3} />
-                    </button>
-                    <span
-                      style={{
-                        width: "32px",
-                        textAlign: "center",
-                        fontWeight: 800,
-                        fontSize: "14px",
-                        color: colors.textMain,
-                      }}
-                    >
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => updateQty(item.id, 1)}
-                      className="qty-btn"
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "8px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        cursor: "pointer",
-                        color: colors.textMuted,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <Plus size={14} strokeWidth={3} />
+                      <CheckCircle size={16} /> Food Is Ready
                     </button>
                   </div>
+
                 </div>
               ))}
             </div>
           )}
+
         </div>
+      )}
 
-        {/* Checkout Summary */}
-        <div
-          style={{
-            padding: "28px",
-            backgroundColor:
-              theme === "light" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.2)",
-            borderTop: `1px solid ${theme === "light" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"}`,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              marginBottom: "28px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "14px",
-                fontWeight: 700,
-                color: colors.textMuted,
-              }}
-            >
-              <span>Subtotal</span>
-              <span style={{ color: colors.textMain }}>
-                $
-                {subtotal.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "14px",
-                fontWeight: 700,
-                color: colors.textMuted,
-              }}
-            >
-              <span>Tax Rate (8%)</span>
-              <span style={{ color: colors.textMain }}>
-                ${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div
-              style={{
-                width: "100%",
-                height: "1px",
-                backgroundColor: colors.border,
-                margin: "8px 0",
-              }}
-            ></div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-end",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: colors.textMuted,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    margin: "0 0 4px 0",
-                  }}
-                >
-                  Total Amount
-                </p>
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 900,
-                    color: colors.textMain,
-                    letterSpacing: "-0.04em",
-                    lineHeight: 1,
-                  }}
-                >
-                  $
-                  {total.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-              <Badge
-                variant="success"
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "10px",
-                  fontWeight: 800,
-                  fontSize: "12px",
-                }}
-              >
-                READY
-              </Badge>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "10px", marginBottom: "28px" }}>
-            <button
-              onClick={() => setPaymentMethod("card")}
-              style={styles.paymentBtn(paymentMethod === "card")}
-            >
-              <CreditCard size={22} strokeWidth={2} />
-              CARD
-            </button>
-            <button
-              onClick={() => setPaymentMethod("cash")}
-              style={styles.paymentBtn(paymentMethod === "cash")}
-            >
-              <Wallet size={22} strokeWidth={2} />
-              CASH
-            </button>
-            <button
-              onClick={() => setPaymentMethod("online")}
-              style={styles.paymentBtn(paymentMethod === "online")}
-            >
-              <Zap size={22} strokeWidth={2} />
-              ONLINE
-            </button>
-          </div>
-
-          <Button
-            variant="primary"
-            className="checkout-btn"
-            style={{
-              width: "100%",
-              padding: "20px",
-              borderRadius: "20px",
-              fontSize: "16px",
-              fontWeight: 800,
-              backgroundColor: colors.primaryDark,
-              boxShadow:
-                cart.length > 0
-                  ? `0 16px 32px -8px ${colors.primaryDark}60, inset 0 2px 0 rgba(255,255,255,0.2)`
-                  : "none",
-              display: "flex",
-              justifyContent: "center",
-              gap: "12px",
-              opacity: cart.length === 0 ? 0.5 : 1,
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-            disabled={cart.length === 0}
-            rightIcon={<ArrowRight size={20} strokeWidth={3} />}
-          >
-            AUTHORIZE PAYMENT
-          </Button>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
-          to { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(15px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulseRing {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(1.6); opacity: 0; }
-        }
-        @keyframes spinSlow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .fade-in-up {
-          animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .pulse-ring {
-          animation: pulseRing 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-        }
-        .spin-slow {
-          animation: spinSlow 8s linear infinite;
-        }
-        .pos-card:hover {
-          transform: translateY(-8px) scale(1.01);
-          box-shadow: 0 24px 48px -12px rgba(0,0,0,0.1) !important;
-          border-color: ${colors.primaryDark} !important;
-        }
-        .pos-card:hover .product-img {
-          transform: scale(1.1) rotate(2deg);
-        }
-        .pos-card:hover .img-overlay {
-          opacity: 0.6 !important;
-        }
-        .pos-card:hover .quick-add {
-          transform: translateY(0) !important;
-        }
-        .pos-card:hover .add-btn {
-          background-color: ${colors.primaryDark} !important;
-          color: white !important;
-          transform: scale(1.1) rotate(90deg);
-          box-shadow: 0 8px 16px ${colors.primaryDark}40;
-        }
-        .cart-row:hover {
-          transform: scale(1.02) translateX(4px);
-          box-shadow: 0 8px 16px rgba(0,0,0,0.06) !important;
-          border-color: ${colors.primaryDark} !important;
-        }
-        .qty-btn:hover {
-          background-color: ${theme === "light" ? "#f1f5f9" : "rgba(255,255,255,0.1)"} !important;
-          color: ${colors.primaryDark} !important;
-        }
-        .clear-cart-btn:hover {
-          background-color: #fff1f2 !important;
-          color: #e11d48 !important;
-          transform: scale(1.1);
-        }
-        .customer-row:hover {
-          border-color: ${colors.primaryDark} !important;
-          background-color: ${theme === "light" ? "#f8fafc" : "rgba(255,255,255,0.05)"} !important;
-        }
-        .checkout-btn:hover:not(:disabled) {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px -8px ${colors.primaryDark}80, inset 0 2px 0 rgba(255,255,255,0.2) !important;
-          filter: brightness(1.1);
-        }
-        .checkout-btn:active:not(:disabled) {
-          transform: translateY(2px);
-          box-shadow: 0 8px 16px -8px ${colors.primaryDark}80 !important;
-        }
-        .cat-btn:hover {
-          transform: translateY(-2px);
-          filter: brightness(1.05);
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: ${theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"};
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: ${theme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"};
-        }
-        .hide-scroll::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scroll {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </div>
   );
 };

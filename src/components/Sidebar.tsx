@@ -21,6 +21,12 @@ import {
   Activity,
   Truck,
   ShoppingCart,
+  Tag,
+  UserPlus,
+  Store,
+  Table,
+  Plus,
+  Briefcase,
 } from "lucide-react";
 
 // --- Types ---
@@ -31,6 +37,14 @@ interface NavItem {
   label: string;
   badge?: string;
   hasDropdown?: boolean;
+  dropdownId?: string;
+}
+
+interface NavSubItem {
+  id: string;
+  path: string;
+  icon: React.ReactNode;
+  label: string;
 }
 
 interface NavSection {
@@ -45,9 +59,15 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
+    {},
+  );
   const { theme, colors } = useTheme();
   const location = useLocation();
+
+  const toggleDropdown = (id: string) => {
+    setOpenDropdowns((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // --- Theme Constants (Inline CSS Tokens) ---
   // --- Theme Constants (Inline CSS Tokens) ---
@@ -68,53 +88,206 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
     {
       title: "Navigation",
       items: [
-        { id: "dash", path: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
-        { id: "pos", path: "/screen", icon: <Monitor size={20} />, label: "Terminal", badge: "New" },
-        { id: "inv", path: "/inventory", icon: <Package size={20} />, label: "Inventory", badge: "Live" },
-        { id: "pro", path: "/products", icon: <LayoutGrid size={20} />, label: "Products" },
-        { id: "stock", path: "/stock-history", icon: <Activity size={20} />, label: "Stock History" },
-        { id: "cus", path: "/customers", icon: <Users size={20} />, label: "Customers" },
-        { id: "sup", path: "/supplier", icon: <Truck size={20} />, label: "Suppliers" },
-        { id: "pur", path: "/purchase", icon: <ShoppingCart size={20} />, label: "Purchases" },
-      ]
+        {
+          id: "dash",
+          path: "/",
+          icon: <LayoutDashboard size={20} />,
+          label: "Dashboard",
+        },
+        {
+          id: "pos",
+          path: "/screen",
+          icon: <Monitor size={20} />,
+          label: "Terminal",
+          badge: "New",
+        },
+        {
+          id: "inv",
+          path: "/inventory",
+          icon: <Package size={20} />,
+          label: "Inventory",
+          badge: "Live",
+        },
+        {
+          id: "pro",
+          path: "#",
+          icon: <LayoutGrid size={20} />,
+          label: "Products",
+          hasDropdown: true,
+          dropdownId: "productsDropdown",
+        },
+        {
+          id: "cat",
+          path: "/category",
+          icon: <Tag size={20} />,
+          label: "Categories",
+        },
+        {
+          id: "stock",
+          path: "/stock-history",
+          icon: <Activity size={20} />,
+          label: "Stock History",
+        },
+        {
+          id: "table",
+          path: "/manage-tables",
+          icon: <Table size={20} />,
+          label: "Manage Tables",
+        },
+        {
+          id: "cus",
+          path: "/customers",
+          icon: <Users size={20} />,
+          label: "Customers",
+        },
+        {
+          id: "sup",
+          path: "/supplier",
+          icon: <Truck size={20} />,
+          label: "Suppliers",
+        },
+        {
+          id: "pur",
+          path: "/purchase",
+          icon: <ShoppingCart size={20} />,
+          label: "Purchases",
+        },
+      ],
     },
     {
       title: "Finance",
       items: [
-        { id: "bill", path: "/billing", icon: <Receipt size={20} />, label: "Billing" },
-        { id: "rep", path: "/reports", icon: <PieChart size={20} />, label: "Analytics" },
-      ]
+        {
+          id: "bill",
+          path: "/billing",
+          icon: <Receipt size={20} />,
+          label: "Billing",
+        },
+        {
+          id: "rep",
+          path: "#",
+          icon: <PieChart size={20} />,
+          label: "Analytics",
+          hasDropdown: true,
+          dropdownId: "reportsDropdown",
+        },
+      ],
     },
     {
       title: "System",
       items: [
-        { id: "perm", path: "/permissions", icon: <ShieldCheck size={20} />, label: "Permissions" },
-        { 
-          id: "set", 
-          path: "/settings", 
-          icon: <Settings size={20} />, 
-          label: "Settings",
-          hasDropdown: true 
+        {
+          id: "company-info",
+          path: "/company-info",
+          icon: <Briefcase size={20} />,
+          label: "Company Info",
         },
-      ]
+        {
+          id: "store",
+          path: "/manage-stores",
+          icon: <Store size={20} />,
+          label: "Manage Stores",
+        },
+        {
+          id: "perm",
+          path: "/permissions",
+          icon: <ShieldCheck size={20} />,
+          label: "Permissions",
+        },
+        {
+          id: "prof",
+          path: "/profile",
+          icon: <User size={20} />,
+          label: "Profile",
+        },
+        {
+          id: "usr",
+          path: "#",
+          icon: <Users size={20} />,
+          label: "Users",
+          hasDropdown: true,
+          dropdownId: "usersDropdown",
+        },
+        {
+          id: "set",
+          path: "#",
+          icon: <Settings size={20} />,
+          label: "Settings",
+          hasDropdown: true,
+          dropdownId: "settingsDropdown",
+        },
+      ],
     },
   ];
 
-  const settingsSubItems = [
-    { id: "gen", path: "/settings?tab=general", icon: <Settings size={18} />, label: "General" },
-    { id: "acc", path: "/settings?tab=account", icon: <User size={18} />, label: "Account" },
-    { id: "sec", path: "/settings?tab=security", icon: <ShieldCheck size={18} />, label: "Security" },
-    { id: "not", path: "/settings?tab=notifications", icon: <Bell size={18} />, label: "Notifications" },
-    { id: "bil", path: "/settings?tab=billing", icon: <CreditCard size={18} />, label: "Payments" },
-    { id: "logout", path: "#", icon: <LogOut size={18} />, label: "Logout" },
-  ];
+  const subMenus: Record<string, NavSubItem[]> = {
+    settingsDropdown: [
+      {
+        id: "gen",
+        path: "/settings?tab=general",
+        icon: <Settings size={18} />,
+        label: "General",
+      },
+      {
+        id: "acc",
+        path: "/settings?tab=account",
+        icon: <User size={18} />,
+        label: "Account",
+      },
+      {
+        id: "sec",
+        path: "/settings?tab=security",
+        icon: <ShieldCheck size={18} />,
+        label: "Security",
+      },
+      {
+        id: "not",
+        path: "/settings?tab=notifications",
+        icon: <Bell size={18} />,
+        label: "Notifications",
+      },
+      {
+        id: "bil",
+        path: "/settings?tab=billing",
+        icon: <CreditCard size={18} />,
+        label: "Payments",
+      },
+      { id: "logout", path: "#", icon: <LogOut size={18} />, label: "Logout" },
+    ],
+    usersDropdown: [
+      {
+        id: "adduser",
+        path: "/add-user",
+        icon: <UserPlus size={18} />,
+        label: "Add User",
+      },
+      {
+        id: "manageusers",
+        path: "/manage-users",
+        icon: <Users size={18} />,
+        label: "Manage Users",
+      },
+    ],
+    productsDropdown: [
+      { id: "addproduct", path: "/add-product", icon: <Plus size={18} />, label: "Add Product" },
+      { id: "manageproducts", path: "/products", icon: <LayoutGrid size={18} />, label: "Manage Products" },
+    ],
+    reportsDropdown: [
+      { id: "productwise", path: "/reports/product-wise", icon: <Package size={18} />, label: "Product Wise" },
+      { id: "storewise", path: "/reports/store-wise", icon: <Store size={18} />, label: "Total Store Wise" },
+    ],
+  };
 
   const filteredNavigation = useMemo(() => {
     if (!searchQuery) return navigation;
-    return navigation.map(section => ({
-      ...section,
-      items: section.items.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase()))
-    })).filter(section => section.items.length > 0);
+    return navigation
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) =>
+          item.label.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
   }, [searchQuery]);
 
   // --- Dynamic Inline Styles ---
@@ -133,9 +306,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
     height: "100vh",
     zIndex: 1100,
     boxShadow: "1px 0 10px rgba(0, 0, 0, 0.02)",
-    transform: window.innerWidth < 1024 
-      ? (isMobileOpen ? "translateX(0)" : "translateX(-100%)") 
-      : "translateX(0)",
+    transform:
+      window.innerWidth < 1024
+        ? isMobileOpen
+          ? "translateX(0)"
+          : "translateX(-100%)"
+        : "translateX(0)",
   };
 
   const logoContainerStyle: React.CSSProperties = {
@@ -162,33 +338,47 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
     <>
       {/* Mobile Overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[1000] animate-in fade-in duration-300"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Component */}
-      <aside 
-        style={sidebarStyle}
-        className="sidebar"
-      >
-
+      <aside style={sidebarStyle} className="sidebar">
         {/* Brand Header */}
         <div style={logoContainerStyle}>
           <div className="flex items-center gap-5 overflow-hidden w-full">
             <div style={brandIconStyle}>
               <Zap size={26} strokeWidth={2.5} fill="currentColor" />
             </div>
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              whiteSpace: "nowrap"
-            }}>
-              <span style={{ fontSize: "24px", fontWeight: 900, color: sidebarColors.textMain, letterSpacing: "-1px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 900,
+                  color: sidebarColors.textMain,
+                  letterSpacing: "-1px",
+                }}
+              >
                 Symbo<span style={{ color: sidebarColors.primary }}>Sys</span>
               </span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: sidebarColors.textMuted, textTransform: "uppercase", letterSpacing: "0.2em", marginTop: "2px" }}>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  color: sidebarColors.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.2em",
+                  marginTop: "2px",
+                }}
+              >
                 Enterprise ERP
               </span>
             </div>
@@ -197,64 +387,96 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
 
         {/* Search Bar */}
         <div style={{ padding: "0 24px", marginBottom: "32px" }}>
-            <div style={{ position: "relative" }}>
-              <Search style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: sidebarColors.textMuted }} size={16} />
-              <input 
-                type="text"
-                placeholder="Find Module..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px 14px 44px",
-                  borderRadius: "16px",
-                  border: `1px solid ${sidebarColors.border}`,
-                  backgroundColor: theme === "light" ? "rgba(241, 245, 249, 0.5)" : "rgba(255, 255, 255, 0.03)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  outline: "none",
-                  transition: "all 0.3s ease",
-                  color: sidebarColors.textMain
-                }}
-                onFocus={(e) => {
-                  e.target.style.backgroundColor = theme === "light" ? "#ffffff" : "rgba(255,255,255,0.08)";
-                  e.target.style.borderColor = sidebarColors.primary;
-                }}
-                onBlur={(e) => {
-                  e.target.style.backgroundColor = theme === "light" ? "rgba(241, 245, 249, 0.5)" : "rgba(255, 255, 255, 0.03)";
-                  e.target.style.borderColor = sidebarColors.border;
-                }}
-              />
-            </div>
+          <div style={{ position: "relative" }}>
+            <Search
+              style={{
+                position: "absolute",
+                left: "16px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: sidebarColors.textMuted,
+              }}
+              size={16}
+            />
+            <input
+              type="text"
+              placeholder="Find Module..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "14px 16px 14px 44px",
+                borderRadius: "16px",
+                border: `1px solid ${sidebarColors.border}`,
+                backgroundColor:
+                  theme === "light"
+                    ? "rgba(241, 245, 249, 0.5)"
+                    : "rgba(255, 255, 255, 0.03)",
+                fontSize: "13px",
+                fontWeight: 600,
+                outline: "none",
+                transition: "all 0.3s ease",
+                color: sidebarColors.textMain,
+              }}
+              onFocus={(e) => {
+                e.target.style.backgroundColor =
+                  theme === "light" ? "#ffffff" : "rgba(255,255,255,0.08)";
+                e.target.style.borderColor = sidebarColors.primary;
+              }}
+              onBlur={(e) => {
+                e.target.style.backgroundColor =
+                  theme === "light"
+                    ? "rgba(241, 245, 249, 0.5)"
+                    : "rgba(255, 255, 255, 0.03)";
+                e.target.style.borderColor = sidebarColors.border;
+              }}
+            />
+          </div>
         </div>
 
         {/* Navigation Items */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 18px" }} className="custom-scrollbar">
+        <div
+          style={{ flex: 1, overflowY: "auto", padding: "0 18px" }}
+          className="custom-scrollbar"
+        >
           {filteredNavigation.map((section, idx) => (
             <div key={idx} style={{ marginBottom: "28px" }}>
-              <p style={{ 
-                fontSize: "11px", 
-                fontWeight: 800, 
-                color: sidebarColors.textMuted, 
-                textTransform: "uppercase", 
-                letterSpacing: "0.12em",
-                padding: "0 18px",
-                marginBottom: "12px",
-                opacity: 0.5
-              }}>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  color: sidebarColors.textMuted,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  padding: "0 18px",
+                  marginBottom: "12px",
+                  opacity: 0.5,
+                }}
+              >
                 {section.title}
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+              >
                 {section.items.map((item) => {
-                  const isActive = location.pathname === item.path;
+                  const isActive =
+                    location.pathname === item.path ||
+                    (item.hasDropdown &&
+                      item.dropdownId &&
+                      subMenus[item.dropdownId]?.some(
+                        (s) => location.pathname === s.path,
+                      ));
+                  const isDropdownOpen = item.dropdownId
+                    ? openDropdowns[item.dropdownId]
+                    : false;
                   return (
                     <div key={item.id}>
                       <NavLink
-                        to={item.path}
+                        to={item.hasDropdown ? "#" : item.path}
                         onClick={(e) => {
-                          if (item.hasDropdown) {
+                          if (item.hasDropdown && item.dropdownId) {
                             e.preventDefault();
-                            setIsSettingsOpen(!isSettingsOpen);
+                            toggleDropdown(item.dropdownId);
                           } else if (window.innerWidth < 1024) {
                             setIsMobileOpen(false);
                           }
@@ -267,101 +489,150 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
                           borderRadius: "14px",
                           textDecoration: "none",
                           color: isActive ? "white" : sidebarColors.textMain,
-                          backgroundColor: isActive ? sidebarColors.activeBg : "transparent",
+                          backgroundColor: isActive
+                            ? sidebarColors.activeBg
+                            : "transparent",
                           transition: "all 0.2s ease",
                           justifyContent: "flex-start",
                           position: "relative",
-                          boxShadow: isActive ? (theme === "light" ? "0 8px 15px -5px rgba(15, 23, 42, 0.25)" : "0 8px 15px -5px rgba(0, 0, 0, 0.5)") : "none",
+                          boxShadow: isActive
+                            ? theme === "light"
+                              ? "0 8px 15px -5px rgba(15, 23, 42, 0.25)"
+                              : "0 8px 15px -5px rgba(0, 0, 0, 0.5)"
+                            : "none",
                         }}
                         className="group"
                       >
-                        <div style={{ 
-                          color: isActive ? "white" : sidebarColors.textMuted,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transition: "all 0.3s ease"
-                        }}>
+                        <div
+                          style={{
+                            color: isActive ? "white" : sidebarColors.textMuted,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.3s ease",
+                          }}
+                        >
                           {item.icon}
                         </div>
-                        <span style={{ fontSize: "14px", fontWeight: isActive ? 700 : 600 }}>
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: isActive ? 700 : 600,
+                          }}
+                        >
                           {item.label}
                         </span>
                         {item.hasDropdown && (
-                          <ChevronRight 
-                            size={16} 
-                            style={{ 
-                              marginLeft: "auto", 
+                          <ChevronRight
+                            size={16}
+                            style={{
+                              marginLeft: "auto",
                               transition: "transform 0.3s ease",
-                              transform: isSettingsOpen ? "rotate(90deg)" : "none",
-                              color: isActive ? "white" : sidebarColors.textMuted
-                            }} 
+                              transform: isDropdownOpen
+                                ? "rotate(90deg)"
+                                : "none",
+                              color: isActive
+                                ? "white"
+                                : sidebarColors.textMuted,
+                            }}
                           />
                         )}
                         {!item.hasDropdown && item.badge && (
-                          <span style={{ 
-                            marginLeft: "auto",
-                            padding: "4px 8px",
-                            borderRadius: "8px",
-                            backgroundColor: isActive ? "rgba(255,255,255,0.15)" : `${sidebarColors.primary}15`,
-                            color: isActive ? "white" : sidebarColors.primary,
-                            fontSize: "10px",
-                            fontWeight: 800,
-                            textTransform: "uppercase"
-                          }}>
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              padding: "4px 8px",
+                              borderRadius: "8px",
+                              backgroundColor: isActive
+                                ? "rgba(255,255,255,0.15)"
+                                : `${sidebarColors.primary}15`,
+                              color: isActive ? "white" : sidebarColors.primary,
+                              fontSize: "10px",
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                            }}
+                          >
                             {item.badge}
                           </span>
                         )}
                       </NavLink>
-                      
-                      {item.hasDropdown && isSettingsOpen && (
-                        <div style={{ 
-                          marginTop: "4px", 
-                          paddingLeft: "24px", 
-                          display: "flex", 
-                          flexDirection: "column", 
-                          gap: "4px",
-                          animation: "slideIn 0.3s ease" 
-                        }}>
-                          {settingsSubItems.map((subItem) => (
-                            <NavLink
-                              key={subItem.id}
-                              to={subItem.path}
-                              onClick={(e) => {
-                                if (subItem.id === "logout") {
-                                  e.preventDefault();
-                                  localStorage.removeItem("token");
-                                  localStorage.removeItem("user");
-                                  window.location.href = "/login";
-                                } else {
-                                  if (window.innerWidth < 1024) setIsMobileOpen(false);
-                                }
-                              }}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "12px",
-                                padding: "10px 16px",
-                                borderRadius: "12px",
-                                textDecoration: "none",
-                                color: sidebarColors.textMuted,
-                                transition: "all 0.2s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = sidebarColors.bg;
-                                e.currentTarget.style.color = sidebarColors.textMain;
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = sidebarColors.textMuted;
-                              }}
-                            >
-                              <div style={{ opacity: 0.7 }}>{subItem.icon}</div>
-                              <span style={{ fontSize: "13px", fontWeight: 600 }}>{subItem.label}</span>
-                            </NavLink>
-                          ))}
-                        </div>
-                      )}
+
+                      {item.hasDropdown &&
+                        isDropdownOpen &&
+                        item.dropdownId && (
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              paddingLeft: "24px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "4px",
+                              animation: "slideIn 0.3s ease",
+                            }}
+                          >
+                            {subMenus[item.dropdownId]?.map((subItem) => (
+                              <NavLink
+                                key={subItem.id}
+                                to={subItem.path}
+                                onClick={(e) => {
+                                  if (subItem.id === "logout") {
+                                    e.preventDefault();
+                                    localStorage.removeItem("token");
+                                    localStorage.removeItem("user");
+                                    window.location.href = "/login";
+                                  } else {
+                                    if (window.innerWidth < 1024)
+                                      setIsMobileOpen(false);
+                                  }
+                                }}
+                                style={({ isActive: subIsActive }) => ({
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "12px",
+                                  padding: "10px 16px",
+                                  borderRadius: "12px",
+                                  textDecoration: "none",
+                                  color: subIsActive
+                                    ? sidebarColors.primary
+                                    : sidebarColors.textMuted,
+                                  backgroundColor: subIsActive
+                                    ? `${sidebarColors.primary}15`
+                                    : "transparent",
+                                  transition: "all 0.2s ease",
+                                })}
+                                onMouseEnter={(e) => {
+                                  if (
+                                    !location.pathname.includes(subItem.path)
+                                  ) {
+                                    e.currentTarget.style.backgroundColor =
+                                      sidebarColors.bg;
+                                    e.currentTarget.style.color =
+                                      sidebarColors.textMain;
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (
+                                    !location.pathname.includes(subItem.path)
+                                  ) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "transparent";
+                                    e.currentTarget.style.color =
+                                      sidebarColors.textMuted;
+                                  }
+                                }}
+                              >
+                                <div style={{ opacity: 0.7 }}>
+                                  {subItem.icon}
+                                </div>
+                                <span
+                                  style={{ fontSize: "13px", fontWeight: 600 }}
+                                >
+                                  {subItem.label}
+                                </span>
+                              </NavLink>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   );
                 })}
@@ -371,14 +642,58 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
         </div>
 
         {/* Footer Info */}
-        <div style={{ padding: "24px", borderTop: `1px solid ${sidebarColors.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: sidebarColors.bg, borderRadius: "16px", border: `1px solid ${sidebarColors.border}` }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: sidebarColors.bg, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${sidebarColors.border}` }}>
+        <div
+          style={{
+            padding: "24px",
+            borderTop: `1px solid ${sidebarColors.border}`,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px",
+              backgroundColor: sidebarColors.bg,
+              borderRadius: "16px",
+              border: `1px solid ${sidebarColors.border}`,
+            }}
+          >
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                backgroundColor: sidebarColors.bg,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: `1px solid ${sidebarColors.border}`,
+              }}
+            >
               <ShieldCheck size={18} style={{ color: sidebarColors.primary }} />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: "12px", fontWeight: 700, color: sidebarColors.textMain, margin: 0 }}>V.2.0.4 PRO</p>
-              <p style={{ fontSize: "10px", fontWeight: 600, color: sidebarColors.textMuted, margin: 0 }}>Sync Online</p>
+              <p
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: sidebarColors.textMain,
+                  margin: 0,
+                }}
+              >
+                V.2.0.4 PRO
+              </p>
+              <p
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  color: sidebarColors.textMuted,
+                  margin: 0,
+                }}
+              >
+                Sync Online
+              </p>
             </div>
           </div>
         </div>
